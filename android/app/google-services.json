@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "403941419914",
+    "project_id": "artspace-f0880",
+    "storage_bucket": "artspace-f0880.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:403941419914:android:d8840bde33c7d88b933673",
+        "android_client_info": {
+          "package_name": "com.example.artspace"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAX7s4OMiTllnSR_I8Tl1hd8TVWdnrWbjo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
