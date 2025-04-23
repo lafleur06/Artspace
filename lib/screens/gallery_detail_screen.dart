@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'artwork_add_screen.dart';
+import 'artwork_detail_screen.dart';
 
 class GalleryDetailScreen extends StatefulWidget {
   final String galleryId;
@@ -51,6 +52,13 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
     } finally {
       setState(() => isSaving = false);
     }
+  }
+
+  Future<void> deleteArtwork(String artworkId) async {
+    await FirebaseFirestore.instance
+        .collection('artworks')
+        .doc(artworkId)
+        .delete();
   }
 
   @override
@@ -107,28 +115,36 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
                         .orderBy("createdAt", descending: true)
                         .snapshots(),
                 builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text("Hata oluştu: ${snapshot.error}"),
+                    );
+                  }
+
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  final artworks = snapshot.data!.docs;
+
+                  if (artworks.isEmpty) {
                     return const Center(
                       child: Text("Bu galeriye ait eser yok."),
                     );
                   }
 
-                  final artworks = snapshot.data!.docs;
-
                   return ListView.builder(
                     itemCount: artworks.length,
                     itemBuilder: (context, index) {
-                      final artwork =
-                          artworks[index].data() as Map<String, dynamic>;
+                      final doc = artworks[index];
+                      final artwork = doc.data() as Map<String, dynamic>;
+
                       return ListTile(
                         title: Text(artwork['title'] ?? "Başlıksız"),
                         subtitle: Text(artwork['description'] ?? ""),
                         leading:
-                            artwork['imageUrl'] != null
+                            artwork['imageUrl'] != null &&
+                                    artwork['imageUrl'] != ""
                                 ? Image.network(
                                   artwork['imageUrl'],
                                   width: 50,
@@ -136,6 +152,49 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
                                   fit: BoxFit.cover,
                                 )
                                 : const Icon(Icons.image),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder:
+                                  (ctx) => AlertDialog(
+                                    title: const Text("Eseri Sil"),
+                                    content: const Text(
+                                      "Bu eseri silmek istiyor musunuz?",
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(ctx, false),
+                                        child: const Text("Hayır"),
+                                      ),
+                                      TextButton(
+                                        onPressed:
+                                            () => Navigator.pop(ctx, true),
+                                        child: const Text("Evet"),
+                                      ),
+                                    ],
+                                  ),
+                            );
+
+                            if (confirm == true) {
+                              await deleteArtwork(doc.id);
+                            }
+                          },
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => ArtworkDetailScreen(
+                                    artworkId: doc.id,
+                                    initialData: artwork,
+                                  ),
+                            ),
+                          );
+                        },
                       );
                     },
                   );
