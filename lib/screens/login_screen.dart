@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,10 +26,18 @@ class _LoginScreenState extends State<LoginScreen> {
           password: passwordController.text.trim(),
         );
       } else {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-        );
+        final userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: emailController.text.trim(),
+              password: passwordController.text.trim(),
+            );
+
+        final uid = userCredential.user!.uid;
+        final randomId = Random().nextInt(9000) + 1000; // 1000-9999 arası
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          'username': 'user-$randomId',
+          'avatarUrl': '',
+        });
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
