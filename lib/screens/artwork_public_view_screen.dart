@@ -56,8 +56,9 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
 
     await FirebaseFirestore.instance.collection('notifications').add({
       'toUserId': widget.artwork['userId'],
-      'message':
-          "Bir kullanıcı '${widget.artwork['title']}' adlı eserinize ₺${offer!.toStringAsFixed(2)} teklif verdi.",
+      'fromUserId': FirebaseAuth.instance.currentUser?.uid,
+      'artworkTitle': widget.artwork['title'],
+      'amount': offer,
       'createdAt': FieldValue.serverTimestamp(),
       'isRead': false,
     });

@@ -18,6 +18,16 @@ class NotificationsScreen extends StatelessWidget {
     }
   }
 
+  Future<String> getUsername(String uid) async {
+    try {
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      return doc.data()?['username'] ?? 'Bir kullanıcı';
+    } catch (_) {
+      return 'Bir kullanıcı';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
@@ -61,16 +71,49 @@ class NotificationsScreen extends StatelessWidget {
                               data['createdAt'] is Timestamp
                                   ? (data['createdAt'] as Timestamp).toDate()
                                   : null;
+                          final fromUserId = data['fromUserId'];
+                          final artworkTitle =
+                              data['artworkTitle'] ?? 'bir eser';
+                          final amount =
+                              (data['amount'] is num)
+                                  ? (data['amount'] as num).toStringAsFixed(2)
+                                  : '0.00';
 
-                          return ListTile(
-                            leading: const Icon(Icons.notifications),
-                            title: Text(data['message'] ?? 'Mesaj yok'),
-                            subtitle:
-                                createdAt != null
-                                    ? Text(
-                                      "${createdAt.day}.${createdAt.month}.${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}",
-                                    )
-                                    : null,
+                          if (fromUserId == null) {
+                            // eski bildirim formatı
+                            return ListTile(
+                              leading: const Icon(Icons.notifications),
+                              title: Text(
+                                data['message'] ?? "Bir kullanıcı bildirimi",
+                              ),
+                              subtitle:
+                                  createdAt != null
+                                      ? Text(
+                                        "${createdAt.day}.${createdAt.month}.${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}",
+                                      )
+                                      : null,
+                            );
+                          }
+
+                          return FutureBuilder<String>(
+                            future: getUsername(fromUserId),
+                            builder: (context, userSnapshot) {
+                              final username =
+                                  userSnapshot.data ?? 'Bir kullanıcı';
+                              final message =
+                                  "$username, '$artworkTitle' adlı esere ₺$amount teklif verdi.";
+
+                              return ListTile(
+                                leading: const Icon(Icons.notifications),
+                                title: Text(message),
+                                subtitle:
+                                    createdAt != null
+                                        ? Text(
+                                          "${createdAt.day}.${createdAt.month}.${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}",
+                                        )
+                                        : null,
+                              );
+                            },
                           );
                         },
                       );
