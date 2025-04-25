@@ -1,7 +1,8 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'dart:math';
+import 'package:easy_localization/easy_localization.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,7 +19,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> handleAuth() async {
     setState(() => isLoading = true);
-
     try {
       if (isLogin) {
         await FirebaseAuth.instance.signInWithEmailAndPassword(
@@ -31,9 +31,9 @@ class _LoginScreenState extends State<LoginScreen> {
               email: emailController.text.trim(),
               password: passwordController.text.trim(),
             );
-
         final uid = userCredential.user!.uid;
-        final randomId = Random().nextInt(9000) + 1000; // 1000-9999 arası
+        final randomId = Random().nextInt(9000) + 1000;
+
         await FirebaseFirestore.instance.collection('users').doc(uid).set({
           'username': 'user-$randomId',
           'avatarUrl': '',
@@ -41,9 +41,9 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.message ?? 'Bir hata oluştu')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message ?? tr("error_occurred"))),
+      );
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -56,18 +56,18 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(isLogin ? 'Giriş Yap' : 'Kayıt Ol')),
+      appBar: AppBar(title: Text(isLogin ? tr("login") : tr("register"))),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             TextField(
               controller: emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: tr("email")),
             ),
             TextField(
               controller: passwordController,
-              decoration: const InputDecoration(labelText: 'Şifre'),
+              decoration: InputDecoration(labelText: tr("password")),
               obscureText: true,
             ),
             const SizedBox(height: 20),
@@ -75,19 +75,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 ? const CircularProgressIndicator()
                 : ElevatedButton(
                   onPressed: handleAuth,
-                  child: Text(isLogin ? 'Giriş Yap' : 'Kayıt Ol'),
+                  child: Text(isLogin ? tr("login") : tr("register")),
                 ),
             TextButton(
               onPressed: () => setState(() => isLogin = !isLogin),
               child: Text(
-                isLogin
-                    ? 'Hesabın yok mu? Kayıt Ol'
-                    : 'Zaten hesabın var mı? Giriş Yap',
+                isLogin ? tr("no_account") : tr("already_have_account"),
               ),
             ),
             TextButton(
               onPressed: openForgotPasswordDialog,
-              child: const Text('Şifremi Unuttum?'),
+              child: Text(tr("forgot_password")),
             ),
           ],
         ),
@@ -115,15 +113,15 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
       );
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("📩 Şifre sıfırlama maili gönderildi")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(tr("reset_email_sent"))));
       }
     } on FirebaseAuthException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message ?? 'Bir hata oluştu')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? tr("error_occurred"))),
+        );
       }
     } finally {
       setState(() => isSending = false);
@@ -133,15 +131,15 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Şifre Sıfırla"),
+      title: Text(tr("reset_password")),
       content: TextField(
         controller: emailController,
-        decoration: const InputDecoration(labelText: "Mail adresin"),
+        decoration: InputDecoration(labelText: tr("your_email")),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("İptal"),
+          child: Text(tr("cancel")),
         ),
         ElevatedButton(
           onPressed: isSending ? null : sendResetEmail,
@@ -152,7 +150,7 @@ class _ForgotPasswordDialogState extends State<ForgotPasswordDialog> {
                     width: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                  : const Text("Gönder"),
+                  : Text(tr("send")),
         ),
       ],
     );

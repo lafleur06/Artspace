@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ArtworkPublicViewScreen extends StatefulWidget {
   final Map<String, dynamic> artwork;
@@ -20,10 +21,12 @@ class ArtworkPublicViewScreen extends StatefulWidget {
 class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
   double? offer;
   String? galleryName;
+  bool isFavorite = false;
 
   @override
   void initState() {
     super.initState();
+    checkIfFavorite();
     FirebaseFirestore.instance
         .collection('galleries')
         .doc(widget.artwork['galleryId'])
@@ -35,13 +38,54 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
         });
   }
 
+  Future<void> checkIfFavorite() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final snapshot =
+        await FirebaseFirestore.instance
+            .collection('favorites')
+            .where('userId', isEqualTo: uid)
+            .where('artworkId', isEqualTo: widget.artworkId)
+            .get();
+
+    setState(() {
+      isFavorite = snapshot.docs.isNotEmpty;
+    });
+  }
+
+  Future<void> toggleFavorite() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final ref = FirebaseFirestore.instance
+        .collection('favorites')
+        .where('userId', isEqualTo: uid)
+        .where('artworkId', isEqualTo: widget.artworkId);
+
+    final snapshot = await ref.get();
+    if (snapshot.docs.isEmpty) {
+      await FirebaseFirestore.instance.collection('favorites').add({
+        'userId': uid,
+        'artworkId': widget.artworkId,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    }
+
+    checkIfFavorite();
+  }
+
   Future<void> submitOffer() async {
     final price = widget.artwork['price'] ?? 0.0;
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (offer == null || offer! <= 0 || offer! > price) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Geçerli bir teklif girin.")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("enter_valid_offer".tr())));
       return;
     }
 
@@ -56,15 +100,16 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
 
     await FirebaseFirestore.instance.collection('notifications').add({
       'toUserId': widget.artwork['userId'],
-      'message':
-          "Bir kullanıcı '${widget.artwork['title']}' adlı eserinize ₺${offer!.toStringAsFixed(2)} teklif verdi.",
+      'fromUserId': FirebaseAuth.instance.currentUser?.uid,
+      'artworkTitle': widget.artwork['title'],
+      'amount': offer,
       'createdAt': FieldValue.serverTimestamp(),
       'isRead': false,
     });
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Teklif gönderildi.")));
+    ).showSnackBar(SnackBar(content: Text("offer_sent".tr())));
     Navigator.pop(context);
   }
 
@@ -73,23 +118,22 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text("Satın Al"),
-            content: const Text("Bu eseri satın almak istiyor musunuz?"),
+            title: Text("purchase".tr()),
+            content: Text("confirm_purchase".tr()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text("İptal"),
+                child: Text("cancel".tr()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text("Satın Al"),
+                child: Text("purchase".tr()),
               ),
             ],
           ),
     );
 
     if (confirmed == true) {
-      // Ödeme sayfasına yönlendir (şimdilik basit sayfa)
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const MockPaymentScreen()),
@@ -103,7 +147,7 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
     final price = artwork['price'] ?? 0.0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Eser Detayı")),
+      appBar: AppBar(title: Text("artwork_detail".tr())),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
@@ -115,21 +159,40 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
                 fit: BoxFit.cover,
               ),
             const SizedBox(height: 16),
-            Text(
-              "Başlık: ${artwork['title']}",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    "${"title".tr()}: ${artwork['title']}",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: toggleFavorite,
+                  icon: Icon(
+                    isFavorite ? Icons.star : Icons.star_border,
+                    color: isFavorite ? Colors.amber : Colors.grey,
+                  ),
+                  tooltip:
+                      isFavorite ? tr("remove_favorite") : tr("add_favorite"),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
-            Text("Açıklama: ${artwork['description']}"),
+            Text("${"description".tr()}: ${artwork['description']}"),
             const SizedBox(height: 8),
-            Text("Fiyat: ₺${price.toStringAsFixed(2)}"),
+            Text("${"price".tr()}: ₺${price.toStringAsFixed(2)}"),
             const SizedBox(height: 8),
-            Text("Galeri: ${galleryName ?? 'Yükleniyor...'}"),
+            Text("${"gallery".tr()}: ${galleryName ?? 'loading'.tr()}"),
             const SizedBox(height: 20),
             TextField(
-              decoration: const InputDecoration(
-                labelText: "Teklif (₺)",
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: "offer".tr(),
+                border: const OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
               onChanged: (val) => offer = double.tryParse(val),
@@ -138,13 +201,13 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
             ElevatedButton.icon(
               onPressed: submitOffer,
               icon: const Icon(Icons.attach_money),
-              label: const Text("Teklif Ver"),
+              label: Text("submit_offer".tr()),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: confirmPurchase,
               icon: const Icon(Icons.shopping_cart_checkout),
-              label: const Text("Satın Al"),
+              label: Text("purchase".tr()),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             ),
           ],
@@ -160,12 +223,12 @@ class MockPaymentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Ödeme Sayfası")),
-      body: const Center(
+      appBar: AppBar(title: Text("payment".tr())),
+      body: Center(
         child: Text(
-          "💳 Ödeme sistemine yönlendiriliyorsunuz...\n(Gerçek ödeme entegrasyonu henüz yapılmadı)",
+          "payment_redirect".tr(),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 18),
+          style: const TextStyle(fontSize: 18),
         ),
       ),
     );

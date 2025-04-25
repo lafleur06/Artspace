@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
+
 import 'artwork_add_screen.dart';
 import 'artwork_detail_screen.dart';
 import 'artwork_public_view_screen.dart';
@@ -46,11 +48,11 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
           });
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Galeri güncellendi")));
+      ).showSnackBar(SnackBar(content: Text("gallery_updated".tr())));
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Hata: $e")));
+      ).showSnackBar(SnackBar(content: Text("${"error".tr()}: $e")));
     } finally {
       setState(() => isSaving = false);
     }
@@ -85,7 +87,7 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
     final isOwner = currentUserId == widget.initialData['ownerId'];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Galeri Detayı")),
+      appBar: AppBar(title: Text("gallery_detail".tr())),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -93,11 +95,11 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
             if (isOwner) ...[
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: "Galeri Adı"),
+                decoration: InputDecoration(labelText: "gallery_name".tr()),
               ),
               TextField(
                 controller: descController,
-                decoration: const InputDecoration(labelText: "Açıklama"),
+                decoration: InputDecoration(labelText: "description".tr()),
               ),
               const SizedBox(height: 20),
               isSaving
@@ -105,7 +107,7 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
                   : ElevatedButton.icon(
                     onPressed: updateGallery,
                     icon: const Icon(Icons.save),
-                    label: const Text("Güncelle"),
+                    label: Text("update".tr()),
                   ),
               const SizedBox(height: 20),
               ElevatedButton.icon(
@@ -119,14 +121,14 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
                   );
                 },
                 icon: const Icon(Icons.add),
-                label: const Text("Eser Ekle"),
+                label: Text("add_artwork".tr()),
               ),
             ],
             const SizedBox(height: 20),
             const Divider(),
-            const Text(
-              "Bu Galeriye Ait Eserler",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            Text(
+              "gallery_artworks".tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
             ),
             const SizedBox(height: 10),
             Expanded(
@@ -143,9 +145,7 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
                   }
 
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(
-                      child: Text("Bu galeriye ait eser yok."),
-                    );
+                    return Center(child: Text("no_artworks".tr()));
                   }
 
                   final artworks = snapshot.data!.docs;
@@ -163,13 +163,13 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
                       );
 
                       return ListTile(
-                        title: Text(artwork['title'] ?? "Başlıksız"),
+                        title: Text(artwork['title'] ?? "untitled".tr()),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(artwork['description'] ?? ""),
                             Text(
-                              "Fiyat: ₺$price",
+                              "${"price".tr()}: ₺$price",
                               style: const TextStyle(color: Colors.deepPurple),
                             ),
                           ],
@@ -211,22 +211,22 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
                                     context: context,
                                     builder:
                                         (ctx) => AlertDialog(
-                                          title: const Text("Eseri Sil"),
-                                          content: const Text(
-                                            "Bu eseri silmek istiyor musunuz?",
+                                          title: Text("delete_artwork".tr()),
+                                          content: Text(
+                                            "confirm_delete_artwork".tr(),
                                           ),
                                           actions: [
                                             TextButton(
                                               onPressed:
                                                   () =>
                                                       Navigator.pop(ctx, false),
-                                              child: const Text("Hayır"),
+                                              child: Text("no".tr()),
                                             ),
                                             TextButton(
                                               onPressed:
                                                   () =>
                                                       Navigator.pop(ctx, true),
-                                              child: const Text("Evet"),
+                                              child: Text("yes".tr()),
                                             ),
                                           ],
                                         ),

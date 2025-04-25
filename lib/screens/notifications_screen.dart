@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -18,15 +19,25 @@ class NotificationsScreen extends StatelessWidget {
     }
   }
 
+  Future<String> getUsername(String uid) async {
+    try {
+      final doc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      return doc.data()?['username'] ?? tr('a_user');
+    } catch (_) {
+      return tr('a_user');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Bildirimler")),
+      appBar: AppBar(title: Text(tr("notifications"))),
       body:
           uid == null
-              ? const Center(child: Text("Kullanıcı bilgisi alınamadı."))
+              ? Center(child: Text(tr("user_not_found")))
               : FutureBuilder(
                 future: markAllAsRead(uid),
                 builder: (context, _) {
@@ -43,11 +54,11 @@ class NotificationsScreen extends StatelessWidget {
                       }
 
                       if (snapshot.hasError) {
-                        return const Center(child: Text("Bir hata oluştu."));
+                        return Center(child: Text(tr("error_occurred")));
                       }
 
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(child: Text("Henüz bildirim yok."));
+                        return Center(child: Text(tr("no_notifications")));
                       }
 
                       final notifs = snapshot.data!.docs;
@@ -61,16 +72,58 @@ class NotificationsScreen extends StatelessWidget {
                               data['createdAt'] is Timestamp
                                   ? (data['createdAt'] as Timestamp).toDate()
                                   : null;
+                          final fromUserId = data['fromUserId'];
+                          final artworkTitle =
+                              data['artworkTitle'] ?? tr("an_artwork");
+                          final amount =
+                              (data['amount'] is num)
+                                  ? (data['amount'] as num).toStringAsFixed(2)
+                                  : '0.00';
 
-                          return ListTile(
-                            leading: const Icon(Icons.notifications),
-                            title: Text(data['message'] ?? 'Mesaj yok'),
-                            subtitle:
-                                createdAt != null
-                                    ? Text(
-                                      "${createdAt.day}.${createdAt.month}.${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}",
-                                    )
-                                    : null,
+                          if (fromUserId == null) {
+                            return ListTile(
+                              leading: const Icon(Icons.notifications),
+                              title: Text(
+                                data['message'] ?? tr("default_message"),
+                              ),
+                              subtitle:
+                                  createdAt != null
+                                      ? Text(
+                                        DateFormat(
+                                          "dd.MM.yyyy HH:mm",
+                                        ).format(createdAt),
+                                      )
+                                      : null,
+                            );
+                          }
+
+                          return FutureBuilder<String>(
+                            future: getUsername(fromUserId),
+                            builder: (context, userSnapshot) {
+                              final username =
+                                  userSnapshot.data ?? tr("a_user");
+                              final message = tr(
+                                "offer_message",
+                                namedArgs: {
+                                  "user": username,
+                                  "artwork": artworkTitle,
+                                  "amount": amount,
+                                },
+                              );
+
+                              return ListTile(
+                                leading: const Icon(Icons.notifications),
+                                title: Text(message),
+                                subtitle:
+                                    createdAt != null
+                                        ? Text(
+                                          DateFormat(
+                                            "dd.MM.yyyy HH:mm",
+                                          ).format(createdAt),
+                                        )
+                                        : null,
+                              );
+                            },
                           );
                         },
                       );

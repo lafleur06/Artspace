@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'gallery_list_screen.dart';
 import 'gallery_add_screen.dart';
 import 'artwork_detail_screen.dart';
 import 'artwork_public_view_screen.dart';
 import 'notifications_screen.dart';
+import 'package:artspace/main.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -16,16 +18,16 @@ class HomeScreen extends StatelessWidget {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: const Text("Çıkış Yap"),
-            content: const Text("Gerçekten çıkış yapmak istiyor musunuz?"),
+            title: Text("logout_confirm_title".tr()),
+            content: Text("logout_confirm_message".tr()),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text("Hayır"),
+                child: Text("confirm_no".tr()),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text("Evet"),
+                child: Text("confirm_yes".tr()),
               ),
             ],
           ),
@@ -109,8 +111,8 @@ class HomeScreen extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
+            DrawerHeader(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Colors.deepPurple, Colors.purpleAccent],
                 ),
@@ -118,18 +120,18 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.palette, size: 48, color: Colors.white),
-                  SizedBox(height: 8),
+                  const Icon(Icons.palette, size: 48, color: Colors.white),
+                  const SizedBox(height: 8),
                   Text(
-                    "Menü",
-                    style: TextStyle(color: Colors.white, fontSize: 24),
+                    "menu".tr(),
+                    style: const TextStyle(color: Colors.white, fontSize: 24),
                   ),
                 ],
               ),
             ),
             ListTile(
               leading: const Icon(Icons.collections),
-              title: const Text("Galerileri Gör"),
+              title: Text("gallery_list".tr()),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -140,7 +142,7 @@ class HomeScreen extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.add_business),
-              title: const Text("Yeni Galeri Oluştur"),
+              title: Text("gallery_add".tr()),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -149,9 +151,63 @@ class HomeScreen extends StatelessWidget {
                 );
               },
             ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.only(left: 16, top: 8),
+              child: Text(
+                "language".tr(),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.setLocale(const Locale('tr')),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/flags/tr.png',
+                        width: 32,
+                        height: 32,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () => context.setLocale(const Locale('en')),
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/flags/en.png',
+                        width: 32,
+                        height: 32,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.brightness_6),
+              title: Text("dark_mode".tr()),
+              trailing: ValueListenableBuilder<ThemeMode>(
+                valueListenable: themeNotifier,
+                builder: (context, mode, _) {
+                  return Switch(
+                    value: mode == ThemeMode.dark,
+                    onChanged: (val) {
+                      themeNotifier.value =
+                          val ? ThemeMode.dark : ThemeMode.light;
+                    },
+                  );
+                },
+              ),
+            ),
             ListTile(
               leading: const Icon(Icons.logout),
-              title: const Text("Çıkış Yap"),
+              title: Text("logout".tr()),
               onTap: () => _confirmLogout(context),
             ),
           ],
@@ -171,23 +227,24 @@ class HomeScreen extends StatelessWidget {
           children: [
             const Icon(Icons.auto_awesome, size: 80, color: Colors.deepPurple),
             const SizedBox(height: 20),
-            const Text(
-              "ArtSpace'e Hoş Geldin!",
+            Text(
+              "home_title".tr(),
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.deepPurple,
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              "Sanatını paylaş, galeriler oluştur,\nbaşkalarının eserlerine göz at.",
+            Text(
+              "home_subtitle".tr(),
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 30),
-            _sectionTitle("🎨 En Çok Beğenilen Eserler"),
+            _sectionTitle("most_liked".tr()),
+            const SizedBox(height: 8),
             SizedBox(
               height: 190,
               child: StreamBuilder<QuerySnapshot>(
@@ -297,9 +354,9 @@ class HomeScreen extends StatelessWidget {
                 );
               },
               icon: const Icon(Icons.collections, color: Colors.white),
-              label: const Text(
-                "Galerileri Gör",
-                style: TextStyle(fontSize: 16, color: Colors.white),
+              label: Text(
+                "gallery_list".tr(),
+                style: const TextStyle(fontSize: 16, color: Colors.white),
               ),
             ),
             const SizedBox(height: 20),
@@ -318,9 +375,9 @@ class HomeScreen extends StatelessWidget {
                 );
               },
               icon: const Icon(Icons.add_business, color: Colors.white),
-              label: const Text(
-                "Yeni Galeri Oluştur",
-                style: TextStyle(fontSize: 16, color: Colors.white),
+              label: Text(
+                "gallery_add".tr(),
+                style: const TextStyle(fontSize: 16, color: Colors.white),
               ),
             ),
           ],
