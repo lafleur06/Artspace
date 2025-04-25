@@ -4,9 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 import 'artwork_detail_screen.dart';
 import 'gallery_detail_screen.dart';
+import 'artwork_public_view_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -73,7 +75,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text("Kullanıcı adı güncellendi")));
+    ).showSnackBar(SnackBar(content: Text(tr("username_updated"))));
   }
 
   Future<void> confirmAndDelete(String type, String id) async {
@@ -81,16 +83,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            title: Text("$type Sil"),
-            content: Text("Bu $type silinsin mi?"),
+            title: Text("${tr("delete")} ${tr(type.toLowerCase())}"),
+            content: Text("${tr("delete_confirm")} ${tr(type.toLowerCase())}?"),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text("İptal"),
+                child: Text(tr("cancel")),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text("Sil"),
+                child: Text(tr("delete")),
               ),
             ],
           ),
@@ -103,16 +105,131 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
+  Widget _buildFavoritesTab() {
+    return StreamBuilder<QuerySnapshot>(
+      stream:
+          FirebaseFirestore.instance
+              .collection('favorites')
+              .where('userId', isEqualTo: uid)
+              .snapshots(),
+      builder: (context, favSnapshot) {
+        if (!favSnapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+
+        final favDocs = favSnapshot.data!.docs;
+        final artworkIds = favDocs.map((e) => e['artworkId']).toList();
+
+        if (artworkIds.isEmpty) return Center(child: Text(tr("no_favorites")));
+
+        return FutureBuilder<QuerySnapshot>(
+          future:
+              FirebaseFirestore.instance
+                  .collection('artworks')
+                  .where(FieldPath.documentId, whereIn: artworkIds)
+                  .get(),
+          builder: (context, artSnapshot) {
+            if (!artSnapshot.hasData)
+              return const Center(child: CircularProgressIndicator());
+
+            final artworks = artSnapshot.data!.docs;
+
+            return ListView.builder(
+              itemCount: artworks.length,
+              itemBuilder: (context, index) {
+                final doc = artworks[index];
+                final data = doc.data() as Map<String, dynamic>;
+
+                return ListTile(
+                  leading:
+                      data['imageUrl'] != null && data['imageUrl'] != ""
+                          ? Image.network(
+                            data['imageUrl'],
+                            width: 50,
+                            height: 50,
+                          )
+                          : const Icon(Icons.image),
+                  title: Text(data['title'] ?? ""),
+                  subtitle: Text(data['description'] ?? ""),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.star, color: Colors.amber),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (ctx) => AlertDialog(
+                              title: Text(tr("remove_favorite")),
+                              content: Text(tr("confirm_remove_favorite")),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: Text(tr("no")),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: Text(tr("yes")),
+                                ),
+                              ],
+                            ),
+                      );
+                      if (confirm == true) {
+                        toggleFavorite(doc.id);
+                      }
+                    },
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (_) => ArtworkPublicViewScreen(
+                              artwork: data,
+                              artworkId: doc.id,
+                            ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> toggleFavorite(String artworkId) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final ref = FirebaseFirestore.instance
+        .collection('favorites')
+        .where('userId', isEqualTo: uid)
+        .where('artworkId', isEqualTo: artworkId);
+
+    final snapshot = await ref.get();
+    if (snapshot.docs.isEmpty) {
+      await FirebaseFirestore.instance.collection('favorites').add({
+        'userId': uid,
+        'artworkId': artworkId,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (uid == null) {
-      return const Scaffold(body: Center(child: Text("Oturum açılmamış")));
+      return Scaffold(body: Center(child: Text(tr("not_logged_in"))));
     }
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
-        appBar: AppBar(title: const Text("Profilim")),
+        appBar: AppBar(title: Text(tr("my_profile"))),
         body: Column(
           children: [
             const SizedBox(height: 16),
@@ -145,9 +262,9 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     width: 180,
                     child: TextField(
                       controller: usernameController,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         isDense: true,
-                        hintText: "Kullanıcı adı",
+                        hintText: tr("username"),
                       ),
                     ),
                   ),
@@ -166,134 +283,48 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   : ElevatedButton.icon(
                     onPressed: saveUsername,
                     icon: const Icon(Icons.save),
-                    label: const Text("Kaydet"),
+                    label: Text(tr("save")),
                   ),
             const Divider(),
             Expanded(
               child: Column(
                 children: [
-                  const TabBar(
+                  TabBar(
                     tabs: [
-                      Tab(text: "Galerilerim", icon: Icon(Icons.collections)),
-                      Tab(text: "Eserlerim", icon: Icon(Icons.image)),
+                      Tab(
+                        text: tr("my_galleries"),
+                        icon: const Icon(Icons.collections),
+                      ),
+                      Tab(
+                        text: tr("my_artworks"),
+                        icon: const Icon(Icons.image),
+                      ),
+                      Tab(
+                        text: tr("my_favorites"),
+                        icon: const Icon(Icons.favorite),
+                      ),
                     ],
                   ),
                   Expanded(
                     child: TabBarView(
                       children: [
-                        // GALERİLER
-                        StreamBuilder<QuerySnapshot>(
-                          stream:
-                              FirebaseFirestore.instance
-                                  .collection("galleries")
-                                  .where("ownerId", isEqualTo: uid)
-                                  .snapshots(),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData)
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            final docs = snapshot.data!.docs;
-                            if (docs.isEmpty)
-                              return const Center(
-                                child: Text("Galeriniz yok."),
-                              );
-
-                            return ListView.builder(
-                              itemCount: docs.length,
-                              itemBuilder: (context, index) {
-                                final doc = docs[index];
-                                final data = doc.data() as Map<String, dynamic>;
-                                return ListTile(
-                                  title: Text(data['name'] ?? ""),
-                                  subtitle: Text(data['description'] ?? ""),
-                                  trailing: IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed:
-                                        () =>
-                                            confirmAndDelete("Galeri", doc.id),
-                                  ),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => GalleryDetailScreen(
-                                              galleryId: doc.id,
-                                              initialData: data,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                          },
+                        _buildUserCollection(
+                          "galleries",
+                          (doc, data) => GalleryDetailScreen(
+                            galleryId: doc.id,
+                            initialData: data,
+                          ),
+                          type: "Galeri",
                         ),
-
-                        // ESERLER
-                        StreamBuilder<QuerySnapshot>(
-                          stream:
-                              FirebaseFirestore.instance
-                                  .collection("artworks")
-                                  .where("userId", isEqualTo: uid)
-                                  .snapshots(),
-                          builder: (context, snapshot) {
-                            if (!snapshot.hasData)
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            final docs = snapshot.data!.docs;
-                            if (docs.isEmpty)
-                              return const Center(child: Text("Eseriniz yok."));
-
-                            return ListView.builder(
-                              itemCount: docs.length,
-                              itemBuilder: (context, index) {
-                                final doc = docs[index];
-                                final data = doc.data() as Map<String, dynamic>;
-
-                                return ListTile(
-                                  leading:
-                                      data['imageUrl'] != null &&
-                                              data['imageUrl'] != ""
-                                          ? Image.network(
-                                            data['imageUrl'],
-                                            width: 50,
-                                            height: 50,
-                                            fit: BoxFit.cover,
-                                          )
-                                          : const Icon(Icons.image),
-                                  title: Text(data['title'] ?? ""),
-                                  subtitle: Text(data['description'] ?? ""),
-                                  trailing: IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed:
-                                        () => confirmAndDelete("Eser", doc.id),
-                                  ),
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (_) => ArtworkDetailScreen(
-                                              artworkId: doc.id,
-                                              initialData: data,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            );
-                          },
+                        _buildUserCollection(
+                          "artworks",
+                          (doc, data) => ArtworkDetailScreen(
+                            artworkId: doc.id,
+                            initialData: data,
+                          ),
+                          type: "Eser",
                         ),
+                        _buildFavoritesTab(),
                       ],
                     ),
                   ),
@@ -303,6 +334,61 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildUserCollection(
+    String collection,
+    Widget Function(DocumentSnapshot, Map<String, dynamic>) onTapBuilder, {
+    required String type,
+  }) {
+    return StreamBuilder<QuerySnapshot>(
+      stream:
+          FirebaseFirestore.instance
+              .collection(collection)
+              .where(type == "Galeri" ? "ownerId" : "userId", isEqualTo: uid)
+              .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
+        final docs = snapshot.data!.docs;
+        if (docs.isEmpty) {
+          return Center(
+            child: Text(tr(type == "Galeri" ? "no_galleries" : "no_artworks")),
+          );
+        }
+
+        return ListView.builder(
+          itemCount: docs.length,
+          itemBuilder: (context, index) {
+            final doc = docs[index];
+            final data = doc.data() as Map<String, dynamic>;
+            return ListTile(
+              leading:
+                  data['imageUrl'] != null && data['imageUrl'] != ""
+                      ? Image.network(
+                        data['imageUrl'],
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                      )
+                      : const Icon(Icons.image),
+              title: Text(data['title'] ?? data['name'] ?? ""),
+              subtitle: Text(data['description'] ?? ""),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: () => confirmAndDelete(type, doc.id),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => onTapBuilder(doc, data)),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }

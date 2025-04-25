@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:easy_localization/easy_localization.dart';
+
 import 'gallery_detail_screen.dart';
 
 class GalleryListScreen extends StatefulWidget {
@@ -16,16 +18,16 @@ class _GalleryListScreenState extends State<GalleryListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Tüm Galeriler")),
+      appBar: AppBar(title: Text("all_galleries".tr())),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(10.0),
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: "Galeri Ara",
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: "search_gallery".tr(),
+                prefixIcon: const Icon(Icons.search),
+                border: const OutlineInputBorder(),
               ),
               onChanged: (value) {
                 setState(() {
@@ -47,7 +49,7 @@ class _GalleryListScreenState extends State<GalleryListScreen> {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("Henüz galeri yok."));
+                  return Center(child: Text("no_gallery".tr()));
                 }
 
                 final galleries =
@@ -59,9 +61,7 @@ class _GalleryListScreenState extends State<GalleryListScreen> {
                     }).toList();
 
                 if (galleries.isEmpty) {
-                  return const Center(
-                    child: Text("Aramaya uygun galeri bulunamadı."),
-                  );
+                  return Center(child: Text("no_gallery_match".tr()));
                 }
 
                 return ListView.builder(
@@ -73,19 +73,21 @@ class _GalleryListScreenState extends State<GalleryListScreen> {
                         (gallery['createdAt'] as Timestamp?)?.toDate();
                     final formattedDate =
                         createdAt != null
-                            ? DateFormat.yMMMMd().format(createdAt)
-                            : "Tarih yok";
+                            ? DateFormat.yMMMMd(
+                              context.locale.languageCode,
+                            ).format(createdAt)
+                            : "no_date".tr();
 
                     return Card(
                       margin: const EdgeInsets.all(10),
                       child: ListTile(
-                        title: Text(gallery['name'] ?? 'İsimsiz Galeri'),
+                        title: Text(gallery['name'] ?? 'unnamed_gallery'.tr()),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(gallery['description'] ?? ''),
                             const SizedBox(height: 4),
-                            Text("Oluşturulma: $formattedDate"),
+                            Text("${"created_at".tr()}: $formattedDate"),
                           ],
                         ),
                         onTap: () {

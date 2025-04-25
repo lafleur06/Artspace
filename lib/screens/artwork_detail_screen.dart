@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ArtworkDetailScreen extends StatefulWidget {
   final String artworkId;
@@ -94,11 +95,11 @@ class _ArtworkDetailScreenState extends State<ArtworkDetailScreen> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Eser güncellendi")));
+      ).showSnackBar(SnackBar(content: Text("artwork_updated".tr())));
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Hata: $e")));
+      ).showSnackBar(SnackBar(content: Text("${"error".tr()}: $e")));
     } finally {
       setState(() => isSaving = false);
     }
@@ -109,44 +110,44 @@ class _ArtworkDetailScreenState extends State<ArtworkDetailScreen> {
     final imageUrl = widget.initialData['imageUrl'] ?? "";
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Eser Detayı")),
+      appBar: AppBar(title: Text("artwork_detail".tr())),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: ListView(
           children: [
             TextField(
               controller: titleController,
-              decoration: const InputDecoration(labelText: "Eser Başlığı"),
+              decoration: InputDecoration(labelText: "title".tr()),
             ),
             TextField(
               controller: descController,
-              decoration: const InputDecoration(labelText: "Açıklama"),
+              decoration: InputDecoration(labelText: "description".tr()),
               maxLines: 4,
             ),
             TextField(
               controller: priceController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Fiyat (₺)"),
+              decoration: InputDecoration(labelText: "price".tr()),
             ),
             const SizedBox(height: 20),
-            const Text(
-              "Görsel:",
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              "image".tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             newImageFile != null
                 ? Image.file(newImageFile!, height: 150)
                 : (imageUrl != ""
                     ? Image.network(imageUrl, height: 150)
-                    : const Text("Henüz görsel yok")),
+                    : Text("no_image".tr())),
             const SizedBox(height: 10),
             ElevatedButton.icon(
               onPressed: pickImage,
               icon: const Icon(Icons.image),
               label: Text(
                 imageUrl == "" && newImageFile == null
-                    ? "Görsel Ekle"
-                    : "Görseli Değiştir",
+                    ? "add_image".tr()
+                    : "change_image".tr(),
               ),
             ),
             const SizedBox(height: 20),
@@ -155,7 +156,7 @@ class _ArtworkDetailScreenState extends State<ArtworkDetailScreen> {
                 : ElevatedButton.icon(
                   onPressed: updateArtwork,
                   icon: const Icon(Icons.save),
-                  label: const Text("Güncelle"),
+                  label: Text("update".tr()),
                 ),
           ],
         ),

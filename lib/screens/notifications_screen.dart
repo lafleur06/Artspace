@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -22,9 +23,9 @@ class NotificationsScreen extends StatelessWidget {
     try {
       final doc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
-      return doc.data()?['username'] ?? 'Bir kullanıcı';
+      return doc.data()?['username'] ?? tr('a_user');
     } catch (_) {
-      return 'Bir kullanıcı';
+      return tr('a_user');
     }
   }
 
@@ -33,10 +34,10 @@ class NotificationsScreen extends StatelessWidget {
     final uid = FirebaseAuth.instance.currentUser?.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Bildirimler")),
+      appBar: AppBar(title: Text(tr("notifications"))),
       body:
           uid == null
-              ? const Center(child: Text("Kullanıcı bilgisi alınamadı."))
+              ? Center(child: Text(tr("user_not_found")))
               : FutureBuilder(
                 future: markAllAsRead(uid),
                 builder: (context, _) {
@@ -53,11 +54,11 @@ class NotificationsScreen extends StatelessWidget {
                       }
 
                       if (snapshot.hasError) {
-                        return const Center(child: Text("Bir hata oluştu."));
+                        return Center(child: Text(tr("error_occurred")));
                       }
 
                       if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return const Center(child: Text("Henüz bildirim yok."));
+                        return Center(child: Text(tr("no_notifications")));
                       }
 
                       final notifs = snapshot.data!.docs;
@@ -73,23 +74,24 @@ class NotificationsScreen extends StatelessWidget {
                                   : null;
                           final fromUserId = data['fromUserId'];
                           final artworkTitle =
-                              data['artworkTitle'] ?? 'bir eser';
+                              data['artworkTitle'] ?? tr("an_artwork");
                           final amount =
                               (data['amount'] is num)
                                   ? (data['amount'] as num).toStringAsFixed(2)
                                   : '0.00';
 
                           if (fromUserId == null) {
-                            // eski bildirim formatı
                             return ListTile(
                               leading: const Icon(Icons.notifications),
                               title: Text(
-                                data['message'] ?? "Bir kullanıcı bildirimi",
+                                data['message'] ?? tr("default_message"),
                               ),
                               subtitle:
                                   createdAt != null
                                       ? Text(
-                                        "${createdAt.day}.${createdAt.month}.${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}",
+                                        DateFormat(
+                                          "dd.MM.yyyy HH:mm",
+                                        ).format(createdAt),
                                       )
                                       : null,
                             );
@@ -99,9 +101,15 @@ class NotificationsScreen extends StatelessWidget {
                             future: getUsername(fromUserId),
                             builder: (context, userSnapshot) {
                               final username =
-                                  userSnapshot.data ?? 'Bir kullanıcı';
-                              final message =
-                                  "$username, '$artworkTitle' adlı esere ₺$amount teklif verdi.";
+                                  userSnapshot.data ?? tr("a_user");
+                              final message = tr(
+                                "offer_message",
+                                namedArgs: {
+                                  "user": username,
+                                  "artwork": artworkTitle,
+                                  "amount": amount,
+                                },
+                              );
 
                               return ListTile(
                                 leading: const Icon(Icons.notifications),
@@ -109,7 +117,9 @@ class NotificationsScreen extends StatelessWidget {
                                 subtitle:
                                     createdAt != null
                                         ? Text(
-                                          "${createdAt.day}.${createdAt.month}.${createdAt.year} ${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}",
+                                          DateFormat(
+                                            "dd.MM.yyyy HH:mm",
+                                          ).format(createdAt),
                                         )
                                         : null,
                               );

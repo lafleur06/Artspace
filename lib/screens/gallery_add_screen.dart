@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class GalleryAddScreen extends StatefulWidget {
   const GalleryAddScreen({super.key});
@@ -19,7 +20,7 @@ class _GalleryAddScreenState extends State<GalleryAddScreen> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("Kullanıcı oturum açmamış.");
+      if (user == null) throw Exception("auth_error".tr());
 
       await FirebaseFirestore.instance.collection("galleries").add({
         "name": nameController.text.trim(),
@@ -30,14 +31,14 @@ class _GalleryAddScreenState extends State<GalleryAddScreen> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Galeri başarıyla eklendi")));
+      ).showSnackBar(SnackBar(content: Text("gallery_added".tr())));
 
       nameController.clear();
       descController.clear();
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Hata: $e")));
+      ).showSnackBar(SnackBar(content: Text("${"error".tr()}: $e")));
     } finally {
       setState(() => isLoading = false);
     }
@@ -46,18 +47,18 @@ class _GalleryAddScreenState extends State<GalleryAddScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Yeni Galeri Ekle")),
+      appBar: AppBar(title: Text("add_gallery".tr())),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(labelText: "Galeri Adı"),
+              decoration: InputDecoration(labelText: "gallery_name".tr()),
             ),
             TextField(
               controller: descController,
-              decoration: const InputDecoration(labelText: "Açıklama"),
+              decoration: InputDecoration(labelText: "description".tr()),
             ),
             const SizedBox(height: 20),
             isLoading
@@ -65,7 +66,7 @@ class _GalleryAddScreenState extends State<GalleryAddScreen> {
                 : ElevatedButton.icon(
                   onPressed: addGallery,
                   icon: const Icon(Icons.add),
-                  label: const Text("Galeri Oluştur"),
+                  label: Text("create_gallery".tr()),
                 ),
           ],
         ),
