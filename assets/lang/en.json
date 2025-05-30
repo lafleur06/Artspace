@@ -96,6 +96,13 @@
     "no_favorites": "You haven't favorited any artwork yet.",
     "remove_favorite": "Remove from Favorites",
     "confirm_remove_favorite": "Do you want to remove this artwork from your favorites?",
-    "add_favorite": "Add to Favorites"
+    "add_favorite": "Add to Favorites",
+    "chats": "Chats",
+    "no_chats": "No conversations found",
+    "type_message": "Type a message...",
+    "send_message": "Send Message",
+    "new_chat": "New Chat",
+    "enter_username": "Enter username",
+    "start": "Start"
   }
   

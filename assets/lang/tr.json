@@ -96,5 +96,12 @@
     "no_favorites": "Henüz favoriye eklenmiş bir eseriniz yok.",
     "remove_favorite": "Favorilerden Kaldır",
     "confirm_remove_favorite": "Bu eseri favorilerinizden kaldırmak istiyor musunuz?",
-    "add_favorite": "Favorilere Ekle"
+    "add_favorite": "Favorilere Ekle",
+    "chats": "Sohbetler",
+    "no_chats": "Henüz bir konuşma yok",
+    "type_message": "Mesaj yaz...",
+    "send_message": "Mesaj Gönder",
+    "new_chat": "Yeni Sohbet",
+    "enter_username": "Kullanıcı adı gir",
+    "start": "Başlat"
   }
