@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/user_profile_screen.dart';
+import 'screens/chat_list_screen.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
@@ -130,7 +131,10 @@ class _MyAppState extends State<MyApp> {
           locale: context.locale,
           supportedLocales: context.supportedLocales,
           localizationsDelegates: context.localizationDelegates,
-          routes: {'/profile': (context) => const UserProfileScreen()},
+          routes: {
+            '/profile': (context) => const UserProfileScreen(),
+            '/chats': (context) => const ChatListScreen(),
+          },
           home: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
             builder: (context, snapshot) {

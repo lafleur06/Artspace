@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
 
+import 'chat_screen.dart';
+
 class ArtworkPublicViewScreen extends StatefulWidget {
   final Map<String, dynamic> artwork;
   final String artworkId;
@@ -141,6 +143,39 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
     }
   }
 
+  void openChatWithArtist() async {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    final artistId = widget.artwork['userId'];
+    if (currentUserId == null || artistId == null) return;
+
+    final participants = [currentUserId, artistId]..sort();
+    final chatId = participants.join('_');
+
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatId);
+    final chatSnapshot = await chatRef.get();
+
+    if (!chatSnapshot.exists) {
+      await chatRef.set({
+        'participants': participants,
+        'lastMessage': '',
+        'updatedAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => ChatScreen(
+              chatId: chatId,
+              otherUserId: artistId,
+              otherUsername: widget.artwork['artistName'] ?? 'Artist',
+            ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final artwork = widget.artwork;
@@ -209,6 +244,13 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
               icon: const Icon(Icons.shopping_cart_checkout),
               label: Text("purchase".tr()),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: openChatWithArtist,
+              icon: const Icon(Icons.message),
+              label: Text("send_message".tr()),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
             ),
           ],
         ),
