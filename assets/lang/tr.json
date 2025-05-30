@@ -103,5 +103,10 @@
     "send_message": "Mesaj Gönder",
     "new_chat": "Yeni Sohbet",
     "enter_username": "Kullanıcı adı gir",
-    "start": "Başlat"
+    "start": "Başlat",
+    "rate_and_comment": "Puanla ve Yorum Yap",
+    "your_comment": "Yorumunuz",
+    "submit": "Gönder",
+    "comments": "Yorumlar",
+    "no_comments_yet": "Henüz yorum yok"
   }
