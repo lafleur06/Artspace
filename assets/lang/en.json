@@ -103,6 +103,11 @@
     "send_message": "Send Message",
     "new_chat": "New Chat",
     "enter_username": "Enter username",
-    "start": "Start"
+    "start": "Start",
+    "rate_and_comment": "Rate & Comment",
+    "your_comment": "Your comment",
+    "submit": "Submit",
+    "comments": "Comments",
+    "no_comments_yet": "No comments yet"
   }
   

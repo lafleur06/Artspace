@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
-
 import 'chat_screen.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 class ArtworkPublicViewScreen extends StatefulWidget {
   final Map<String, dynamic> artwork;
@@ -24,6 +24,8 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
   double? offer;
   String? galleryName;
   bool isFavorite = false;
+  double userRating = 0;
+  final commentController = TextEditingController();
 
   @override
   void initState() {
@@ -102,7 +104,7 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
 
     await FirebaseFirestore.instance.collection('notifications').add({
       'toUserId': widget.artwork['userId'],
-      'fromUserId': FirebaseAuth.instance.currentUser?.uid,
+      'fromUserId': userId,
       'artworkTitle': widget.artwork['title'],
       'amount': offer,
       'createdAt': FieldValue.serverTimestamp(),
@@ -141,6 +143,25 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
         MaterialPageRoute(builder: (_) => const MockPaymentScreen()),
       );
     }
+  }
+
+  Future<void> submitComment() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null || userRating == 0 || commentController.text.trim().isEmpty)
+      return;
+
+    await FirebaseFirestore.instance.collection('comments').add({
+      'artworkId': widget.artworkId,
+      'userId': uid,
+      'rating': userRating,
+      'comment': commentController.text.trim(),
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    setState(() {
+      userRating = 0;
+      commentController.clear();
+    });
   }
 
   void openChatWithArtist() async {
@@ -251,6 +272,131 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
               icon: const Icon(Icons.message),
               label: Text("send_message".tr()),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
+            ),
+            const Divider(height: 40),
+            Text(
+              "${"rate_and_comment".tr()}",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                RatingBar.builder(
+                  initialRating: 0,
+                  minRating: 1,
+                  direction: Axis.horizontal,
+                  allowHalfRating: true,
+                  itemCount: 5,
+                  itemSize: 30,
+                  itemBuilder:
+                      (context, _) =>
+                          const Icon(Icons.star, color: Colors.amber),
+                  onRatingUpdate: (rating) => userRating = rating,
+                ),
+                StreamBuilder<QuerySnapshot>(
+                  stream:
+                      FirebaseFirestore.instance
+                          .collection('comments')
+                          .where('artworkId', isEqualTo: widget.artworkId)
+                          .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty)
+                      return const Text("⭐ 0.0");
+                    final ratings =
+                        snapshot.data!.docs
+                            .map((doc) => doc['rating'] as num)
+                            .toList();
+                    final average =
+                        ratings.reduce((a, b) => a + b) / ratings.length;
+                    return Text("⭐ ${average.toStringAsFixed(1)}");
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: commentController,
+              decoration: InputDecoration(
+                labelText: "your_comment".tr(),
+                border: const OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: submitComment,
+              icon: const Icon(Icons.send),
+              label: Text("submit".tr()),
+            ),
+            const Divider(height: 40),
+            Text(
+              "${"comments".tr()}",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('comments')
+                      .where('artworkId', isEqualTo: widget.artworkId)
+                      .orderBy('createdAt', descending: true)
+                      .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Text("no_comments_yet".tr());
+                }
+                return Column(
+                  children:
+                      snapshot.data!.docs.map((doc) {
+                        final data = doc.data() as Map<String, dynamic>;
+                        final userId = data['userId'] ?? '';
+
+                        return FutureBuilder<DocumentSnapshot>(
+                          future:
+                              FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(userId)
+                                  .get(),
+                          builder: (context, userSnap) {
+                            if (!userSnap.hasData || !userSnap.data!.exists) {
+                              return ListTile(
+                                leading: const CircleAvatar(
+                                  child: Icon(Icons.person),
+                                ),
+                                title: Text(data['comment'] ?? ''),
+                                subtitle: Text("⭐ ${data['rating'] ?? ''}"),
+                              );
+                            }
+
+                            final user =
+                                userSnap.data!.data() as Map<String, dynamic>;
+                            final username = user['username'] ?? 'Unknown';
+                            final avatarUrl = user['avatarUrl'] ?? '';
+
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundImage:
+                                    avatarUrl.isNotEmpty
+                                        ? NetworkImage(avatarUrl)
+                                        : null,
+                                child:
+                                    avatarUrl.isEmpty
+                                        ? const Icon(Icons.person)
+                                        : null,
+                              ),
+                              title: Text(username),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(data['comment'] ?? ''),
+                                  Text("⭐ ${data['rating'] ?? ''}"),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      }).toList(),
+                );
+              },
             ),
           ],
         ),
