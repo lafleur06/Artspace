@@ -289,6 +289,30 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             Expanded(
               child: Column(
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/orders');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.receipt_long, color: Colors.white),
+                      label: Text(
+                        tr("my_orders"),
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+
                   TabBar(
                     tabs: [
                       Tab(

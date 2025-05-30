@@ -161,6 +161,34 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
     }
   }
 
+  Future<void> addToCart() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final existing =
+        await FirebaseFirestore.instance
+            .collection('carts')
+            .where('userId', isEqualTo: uid)
+            .where('artworkId', isEqualTo: widget.artworkId)
+            .get();
+
+    if (existing.docs.isEmpty) {
+      await FirebaseFirestore.instance.collection('carts').add({
+        'userId': uid,
+        'artworkId': widget.artworkId,
+        'addedAt': FieldValue.serverTimestamp(),
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('added_to_cart'.tr())));
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('already_in_cart'.tr())));
+    }
+  }
+
   Future<void> submitComment() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || userRating == 0 || commentController.text.trim().isEmpty)
@@ -278,40 +306,52 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
                 ),
               )
             else
-              Column(
-                children: [
-                  TextField(
-                    decoration: InputDecoration(
-                      labelText: "offer".tr(),
-                      border: const OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (val) => offer = double.tryParse(val),
+              const SizedBox(height: 20),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: submitOffer,
+                  icon: const Icon(Icons.attach_money),
+                  label: Text("submit_offer".tr()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    onPressed: submitOffer,
-                    icon: const Icon(Icons.attach_money),
-                    label: Text("submit_offer".tr()),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: confirmPurchase,
+                  icon: const Icon(Icons.shopping_cart_checkout),
+                  label: Text("purchase".tr()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    onPressed: confirmPurchase,
-                    icon: const Icon(Icons.shopping_cart_checkout),
-                    label: Text("purchase".tr()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                    ),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: addToCart,
+                  icon: const Icon(Icons.shopping_cart),
+                  label: Text("add_to_cart".tr()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ],
-              ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: openChatWithArtist,
-              icon: const Icon(Icons.message),
-              label: Text("send_message".tr()),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: openChatWithArtist,
+                  icon: const Icon(Icons.message),
+                  label: Text("send_message".tr()),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 20),
             const Divider(height: 40),
             Text(
               "${"rate_and_comment".tr()}",

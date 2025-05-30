@@ -110,6 +110,22 @@
     "comments": "Yorumlar",
     "no_comments_yet": "Henüz yorum yok",
     "uploaded_on": "Yüklenme Tarihi",
-    "sold_status": "Eser Satıldı"
-
+    "sold_status": "Eser Satıldı",
+    "cart_title": "Sepetim",
+    "remove_from_cart": "Sepetten Kaldır",
+    "buy_all": "Tümünü Satın Al",
+    "empty_cart": "Sepetiniz boş",
+    "orders_title": "Siparişlerim",
+    "order_date": "Sipariş Tarihi",
+    "status_preparing": "Hazırlanıyor",
+    "status_shipped": "Kargoda",
+    "status_delivered": "Teslim Edildi",
+    "no_orders_yet": "Henüz siparişiniz yok",
+    "add_to_cart": "Sepete Ekle",
+    "added_to_cart": "Sepete eklendi",
+    "already_in_cart": "Bu eser zaten sepette",
+    "added_to_orders": "Tüm ürünler siparişe eklendi",
+    "total": "Toplam Fiyat",
+    "confirm_remove_from_cart": "Bu ürünü sepetten kaldırmak istiyor musunuz?",
+    "my_orders": "Siparişlerim"
   }

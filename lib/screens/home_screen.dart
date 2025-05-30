@@ -431,6 +431,17 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.pushNamed(context, '/cart');
+        },
+        backgroundColor: Colors.greenAccent,
+        icon: const Icon(Icons.shopping_cart, color: Colors.white),
+        label: Text(
+          "cart_title".tr(),
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
     );
   }
 

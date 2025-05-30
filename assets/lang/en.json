@@ -110,6 +110,23 @@
     "comments": "Comments",
     "no_comments_yet": "No comments yet",
     "uploaded_on": "Uploaded On",
-    "sold_status": "Artwork Sold"
+    "sold_status": "Artwork Sold",
+    "cart_title": "My Cart",
+    "remove_from_cart": "Remove from Cart",
+    "buy_all": "Buy All",
+    "empty_cart": "Your cart is empty",
+    "orders_title": "My Orders",
+    "order_date": "Order Date",
+    "status_preparing": "Preparing",
+    "status_shipped": "Shipped",
+    "status_delivered": "Delivered",
+    "no_orders_yet": "You have no orders yet",
+    "add_to_cart": "Add to Cart",
+    "added_to_cart": "Added to cart",
+    "already_in_cart": "This item is already in your cart",
+    "added_to_orders": "All items added to orders",
+    "total": "Total Price",
+    "confirm_remove_from_cart": "Do you want to remove this item from the cart?",
+    "my_orders": "My Orders"
   }
   
