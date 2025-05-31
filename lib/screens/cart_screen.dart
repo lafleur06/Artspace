@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:artspace/screens/artwork_public_view_screen.dart';
+import 'mock_payment_screen.dart';
 
 class CartScreen extends StatelessWidget {
   final userId = FirebaseAuth.instance.currentUser!.uid;
@@ -15,26 +16,12 @@ class CartScreen extends StatelessWidget {
     List<QueryDocumentSnapshot> cartItems,
     BuildContext context,
   ) async {
-    final batch = FirebaseFirestore.instance.batch();
-
-    for (var item in cartItems) {
-      final artworkId = item['artworkId'];
-      final orderRef = FirebaseFirestore.instance.collection('orders').doc();
-
-      batch.set(orderRef, {
-        'userId': userId,
-        'artworkId': artworkId,
-        'orderDate': Timestamp.now(),
-        'status': 'Hazırlanıyor', // default
-      });
-
-      batch.delete(item.reference);
-    }
-
-    await batch.commit();
-    ScaffoldMessenger.of(
+    Navigator.push(
       context,
-    ).showSnackBar(SnackBar(content: Text('added_to_orders'.tr())));
+      MaterialPageRoute(
+        builder: (_) => MockPaymentScreen(cartItems: cartItems, userId: userId),
+      ),
+    );
   }
 
   @override
@@ -48,8 +35,9 @@ class CartScreen extends StatelessWidget {
                 .where('userId', isEqualTo: userId)
                 .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
+          }
 
           final cartItems = snapshot.data!.docs;
 
@@ -67,8 +55,9 @@ class CartScreen extends StatelessWidget {
               }),
             ),
             builder: (context, asyncSnapshot) {
-              if (!asyncSnapshot.hasData)
+              if (!asyncSnapshot.hasData) {
                 return const Center(child: CircularProgressIndicator());
+              }
 
               final artworks = asyncSnapshot.data!;
               double totalPrice = 0.0;
@@ -157,7 +146,6 @@ class CartScreen extends StatelessWidget {
                                       ],
                                     ),
                               );
-
                               if (confirmed == true) {
                                 removeFromCart(item.id);
                               }

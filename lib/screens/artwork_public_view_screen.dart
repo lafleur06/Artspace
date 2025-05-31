@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'chat_screen.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'mock_payment_screen.dart';
 
 class ArtworkPublicViewScreen extends StatefulWidget {
   final Map<String, dynamic> artwork;
@@ -156,7 +157,14 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
 
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const MockPaymentScreen()),
+        MaterialPageRoute(
+          builder:
+              (_) => MockPaymentScreen(
+                userId: FirebaseAuth.instance.currentUser!.uid,
+                artworkId: widget.artworkId,
+                artworkData: widget.artwork,
+              ),
+        ),
       );
     }
   }
@@ -164,6 +172,19 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
   Future<void> addToCart() async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
+
+    final artDoc =
+        await FirebaseFirestore.instance
+            .collection('artworks')
+            .doc(widget.artworkId)
+            .get();
+
+    if (artDoc.exists && (artDoc['sold'] == true)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("already_sold".tr())));
+      return;
+    }
 
     final existing =
         await FirebaseFirestore.instance
@@ -296,61 +317,66 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
                 ),
               ),
             const SizedBox(height: 20),
-            if (isSold)
-              ElevatedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.check_circle_outline),
-                label: Text("sold_status".tr()),
-                style: ElevatedButton.styleFrom(
-                  disabledBackgroundColor: Colors.grey,
-                ),
-              )
-            else
-              const SizedBox(height: 20),
             Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ElevatedButton.icon(
-                  onPressed: submitOffer,
-                  icon: const Icon(Icons.attach_money),
-                  label: Text("submit_offer".tr()),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.purple,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                if (isSold)
+                  ElevatedButton.icon(
+                    onPressed: null,
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: Text("sold_status".tr()),
+                    style: ElevatedButton.styleFrom(
+                      disabledBackgroundColor: Colors.grey,
+                    ),
+                  )
+                else ...[
+                  TextField(
+                    decoration: InputDecoration(
+                      labelText: "offer".tr(),
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (val) => offer = double.tryParse(val),
                   ),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: confirmPurchase,
-                  icon: const Icon(Icons.shopping_cart_checkout),
-                  label: Text("purchase".tr()),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: submitOffer,
+                    icon: const Icon(Icons.attach_money),
+                    label: Text("submit_offer".tr()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: addToCart,
-                  icon: const Icon(Icons.shopping_cart),
-                  label: Text("add_to_cart".tr()),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: confirmPurchase,
+                    icon: const Icon(Icons.shopping_cart_checkout),
+                    label: Text("purchase".tr()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: addToCart,
+                    icon: const Icon(Icons.shopping_cart),
+                    label: Text("add_to_cart".tr()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: openChatWithArtist,
                   icon: const Icon(Icons.message),
                   label: Text("send_message".tr()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 20),
             const Divider(height: 40),
             Text(
@@ -475,24 +501,6 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
               },
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class MockPaymentScreen extends StatelessWidget {
-  const MockPaymentScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("payment".tr())),
-      body: Center(
-        child: Text(
-          "payment_redirect".tr(),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18),
         ),
       ),
     );

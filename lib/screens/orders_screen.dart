@@ -32,8 +32,9 @@ class OrdersScreen extends StatelessWidget {
                 .orderBy('orderDate', descending: true)
                 .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
-            return Center(child: CircularProgressIndicator());
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
           final orders = snapshot.data!.docs;
 
@@ -45,20 +46,44 @@ class OrdersScreen extends StatelessWidget {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
+              final artworkId = order['artworkId'];
               final timestamp = order['orderDate'] as Timestamp;
               final dateStr = DateFormat.yMMMd().format(timestamp.toDate());
               final status = getTranslatedStatus(order['status']);
 
-              return ListTile(
-                leading: Icon(Icons.shopping_bag),
-                title: Text('Artwork ID: ${order['artworkId']}'),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${'order_date'.tr()}: $dateStr'),
-                    Text('${'status_preparing'.tr()}: $status'),
-                  ],
-                ),
+              return FutureBuilder<DocumentSnapshot>(
+                future:
+                    FirebaseFirestore.instance
+                        .collection('artworks')
+                        .doc(artworkId)
+                        .get(),
+                builder: (context, artworkSnap) {
+                  if (!artworkSnap.hasData || !artworkSnap.data!.exists) {
+                    return ListTile(
+                      leading: const Icon(Icons.image),
+                      title: Text("Artwork"),
+                      subtitle: Text("loading..."),
+                    );
+                  }
+
+                  final artworkData =
+                      artworkSnap.data!.data() as Map<String, dynamic>;
+                  final title = artworkData['title'] ?? 'Untitled';
+                  final price = (artworkData['price'] ?? 0.0) as double;
+
+                  return ListTile(
+                    leading: const Icon(Icons.shopping_bag),
+                    title: Text(title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${'price'.tr()}: ₺${price.toStringAsFixed(2)}'),
+                        Text('${'order_date'.tr()}: $dateStr'),
+                        Text('${'status_preparing'.tr()}: $status'),
+                      ],
+                    ),
+                  );
+                },
               );
             },
           );

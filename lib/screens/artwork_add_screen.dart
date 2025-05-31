@@ -65,6 +65,7 @@ class _ArtworkAddScreenState extends State<ArtworkAddScreen> {
         "createdAt": FieldValue.serverTimestamp(),
         "likes": 0,
         "likedBy": [],
+        'sold': false,
       });
 
       ScaffoldMessenger.of(
