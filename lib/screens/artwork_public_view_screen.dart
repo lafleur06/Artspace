@@ -24,6 +24,7 @@ class ArtworkPublicViewScreen extends StatefulWidget {
 class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
   double? offer;
   String? galleryName;
+  bool isLiked = false;
   bool isFavorite = false;
   double userRating = 0;
   final commentController = TextEditingController();
@@ -32,6 +33,7 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
   @override
   void initState() {
     super.initState();
+    checkIfLiked();
     checkIfFavorite();
     isSold = widget.artwork['sold'] == true;
 
@@ -85,6 +87,53 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
     }
 
     checkIfFavorite();
+  }
+
+  Future<void> checkIfLiked() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final doc =
+        await FirebaseFirestore.instance
+            .collection('artworks')
+            .doc(widget.artworkId)
+            .get();
+    final data = doc.data();
+    if (data == null) return;
+
+    final likedBy = List<String>.from(data['likedBy'] ?? []);
+    setState(() {
+      isLiked = likedBy.contains(uid);
+    });
+  }
+
+  Future<void> toggleLike() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final docRef = FirebaseFirestore.instance
+        .collection('artworks')
+        .doc(widget.artworkId);
+    final doc = await docRef.get();
+
+    if (!doc.exists) return;
+
+    final data = doc.data()!;
+    List likedBy = List<String>.from(data['likedBy'] ?? []);
+    int likes = data['likes'] ?? 0;
+
+    if (likedBy.contains(uid)) {
+      likedBy.remove(uid);
+      likes =
+          (likes - 1).clamp(0, double.infinity).toInt(); // 0'ın altına inmesin
+      setState(() => isLiked = false);
+    } else {
+      likedBy.add(uid);
+      likes += 1;
+      setState(() => isLiked = true);
+    }
+
+    await docRef.update({'likedBy': likedBy, 'likes': likes});
   }
 
   Future<void> submitOffer() async {
@@ -300,6 +349,14 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
                   ),
                   tooltip:
                       isFavorite ? tr("remove_favorite") : tr("add_favorite"),
+                ),
+                IconButton(
+                  onPressed: toggleLike,
+                  icon: Icon(
+                    Icons.favorite,
+                    color: isLiked ? Colors.red : Colors.grey,
+                  ),
+                  tooltip: isLiked ? tr("unlike") : tr("like"),
                 ),
               ],
             ),

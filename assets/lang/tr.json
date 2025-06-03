@@ -130,8 +130,11 @@
     "my_orders": "Siparişlerim",
     "already_sold": "Bu eser zaten satılmış",
     "please_verify_email": "Lütfen e-posta adresinizi doğrulayın.",
-    "please_verify_email_then_login": "Doğrulama e-postası gönderildi. Lütfen doğrulayıp tekrar giriş yapın."
-
-
-    
+    "please_verify_email_then_login": "Doğrulama e-postası gönderildi. Lütfen doğrulayıp tekrar giriş yapın.",
+    "my_offers": "Tekliflerim",
+    "no_offers_received": "Hiç teklif yok.",
+    "offer_for_artwork": "\"{{title}}\" için {{amount}} teklif",
+    "from": "Kimden",
+    "like": "Beğen",
+    "unlike": "Beğenmekten Vazgeç"
   }

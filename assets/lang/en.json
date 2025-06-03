@@ -130,9 +130,12 @@
     "my_orders": "My Orders",
     "already_sold": "This artwork has already been sold",
     "please_verify_email": "Please verify your email before logging in.",
-    "please_verify_email_then_login": "Verification email sent. Please verify and log in."
-
-
-
+    "please_verify_email_then_login": "Verification email sent. Please verify and log in.",
+    "my_offers": "My Offers",
+    "no_offers_received": "No offers received.",
+    "offer_for_artwork": "Offer {{amount}} for \"{{title}}\"",
+    "from": "From",
+    "like": "Like",
+    "unlike": "Unlike"
   }
   

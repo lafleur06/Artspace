@@ -9,6 +9,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'artwork_detail_screen.dart';
 import 'gallery_detail_screen.dart';
 import 'artwork_public_view_screen.dart';
+import 'offers_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -291,28 +292,63 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 children: [
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushNamed(context, '/orders');
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
+                    child: Column(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/orders');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.indigo,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(
+                            Icons.receipt_long,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            tr("my_orders"),
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 8),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const MyOffersScreen(),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(
+                            Icons.local_offer,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            tr("my_offers"),
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
-                      ),
-                      icon: const Icon(Icons.receipt_long, color: Colors.white),
-                      label: Text(
-                        tr("my_orders"),
-                        style: const TextStyle(color: Colors.white),
-                      ),
+                      ],
                     ),
                   ),
-
                   TabBar(
                     tabs: [
                       Tab(

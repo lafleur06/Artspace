@@ -80,26 +80,6 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
     await FirebaseFirestore.instance.collection('artworks').doc(id).delete();
   }
 
-  Future<void> toggleLike(DocumentSnapshot doc) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-    final ref = FirebaseFirestore.instance.collection('artworks').doc(doc.id);
-    final data = doc.data() as Map<String, dynamic>;
-    final likedBy = List<String>.from(data['likedBy'] ?? []);
-    final likes = (data['likes'] ?? 0) as int;
-
-    if (likedBy.contains(uid)) {
-      await ref.update({
-        'likedBy': FieldValue.arrayRemove([uid]),
-        'likes': likes - 1,
-      });
-    } else {
-      await ref.update({
-        'likedBy': FieldValue.arrayUnion([uid]),
-        'likes': likes + 1,
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final isOwner = currentUserId == widget.initialData['ownerId'];
@@ -200,9 +180,6 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
                     itemBuilder: (context, index) {
                       final doc = artworks[index];
                       final artwork = doc.data() as Map<String, dynamic>;
-                      final hasLiked = (artwork['likedBy'] ?? []).contains(
-                        currentUserId,
-                      );
                       final price = (artwork['price'] ?? 0.0).toStringAsFixed(
                         2,
                       );
@@ -237,60 +214,48 @@ class _GalleryDetailScreenState extends State<GalleryDetailScreen> {
                                   fit: BoxFit.cover,
                                 )
                                 : const Icon(Icons.image),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text("${artwork['likes'] ?? 0}"),
-                            IconButton(
-                              icon: Icon(
-                                hasLiked
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color:
-                                    hasLiked
-                                        ? Colors.red
-                                        : Colors.grey.shade600,
-                              ),
-                              onPressed: () => toggleLike(doc),
-                            ),
-                            if (isOwner)
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.delete,
-                                  color: Colors.red,
-                                ),
-                                onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder:
-                                        (ctx) => AlertDialog(
-                                          title: Text("delete_artwork".tr()),
-                                          content: Text(
-                                            "confirm_delete_artwork".tr(),
+                        trailing:
+                            isOwner
+                                ? IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder:
+                                          (ctx) => AlertDialog(
+                                            title: Text("delete_artwork".tr()),
+                                            content: Text(
+                                              "confirm_delete_artwork".tr(),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      ctx,
+                                                      false,
+                                                    ),
+                                                child: Text("no".tr()),
+                                              ),
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      ctx,
+                                                      true,
+                                                    ),
+                                                child: Text("yes".tr()),
+                                              ),
+                                            ],
                                           ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed:
-                                                  () =>
-                                                      Navigator.pop(ctx, false),
-                                              child: Text("no".tr()),
-                                            ),
-                                            TextButton(
-                                              onPressed:
-                                                  () =>
-                                                      Navigator.pop(ctx, true),
-                                              child: Text("yes".tr()),
-                                            ),
-                                          ],
-                                        ),
-                                  );
-                                  if (confirm == true) {
-                                    await deleteArtwork(doc.id);
-                                  }
-                                },
-                              ),
-                          ],
-                        ),
+                                    );
+                                    if (confirm == true) {
+                                      await deleteArtwork(doc.id);
+                                    }
+                                  },
+                                )
+                                : null,
                         onTap: () {
                           if (artwork['userId'] == currentUserId) {
                             Navigator.push(
