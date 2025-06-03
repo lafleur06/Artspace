@@ -43,7 +43,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   void markMessagesAsRead() async {
-
     final unreadMessagesQuery = FirebaseFirestore.instance
         .collection('chats')
         .doc(widget.chatId)
@@ -70,11 +69,14 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     final chatRef = FirebaseFirestore.instance
         .collection('chats')
         .doc(widget.chatId);
-
     final messageRef = chatRef.collection('messages').doc();
+
+    // Alıcıyı belirle
+    final receiverId = widget.otherUserId;
 
     await messageRef.set({
       'senderId': currentUserId,
+      'receiverId': receiverId,
       'text': text,
       'timestamp': timestamp,
       'isRead': false,

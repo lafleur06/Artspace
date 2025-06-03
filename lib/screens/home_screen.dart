@@ -108,6 +108,7 @@ class HomeScreen extends StatelessWidget {
                     .collectionGroup('messages')
                     .where('isRead', isEqualTo: false)
                     .where('senderId', isNotEqualTo: currentUserId)
+                    .where('receiverId', isEqualTo: currentUserId)
                     .snapshots(),
             builder: (context, snapshot) {
               final unreadMsgCount = snapshot.data?.docs.length ?? 0;

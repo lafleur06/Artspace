@@ -128,6 +128,10 @@
     "total": "Toplam Fiyat",
     "confirm_remove_from_cart": "Bu ürünü sepetten kaldırmak istiyor musunuz?",
     "my_orders": "Siparişlerim",
-    "already_sold": "Bu eser zaten satılmış"
+    "already_sold": "Bu eser zaten satılmış",
+    "please_verify_email": "Lütfen e-posta adresinizi doğrulayın.",
+    "please_verify_email_then_login": "Doğrulama e-postası gönderildi. Lütfen doğrulayıp tekrar giriş yapın."
+
+
     
   }

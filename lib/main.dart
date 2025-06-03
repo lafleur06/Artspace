@@ -147,7 +147,7 @@ class _MyAppState extends State<MyApp> {
                   body: Center(child: CircularProgressIndicator()),
                 );
               }
-              if (snapshot.hasData) {
+              if (snapshot.hasData && snapshot.data!.emailVerified) {
                 saveFcmToken();
                 return const HomeScreen();
               } else {
