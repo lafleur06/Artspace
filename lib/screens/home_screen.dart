@@ -41,7 +41,7 @@ class HomeScreen extends StatelessWidget {
     return FirebaseFirestore.instance
         .collection("artworks")
         .orderBy("likes", descending: true)
-        .limit(10)
+        .limit(5)
         .snapshots();
   }
 
