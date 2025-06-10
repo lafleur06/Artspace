@@ -195,15 +195,6 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
     );
 
     if (confirmed == true) {
-      await FirebaseFirestore.instance
-          .collection('artworks')
-          .doc(widget.artworkId)
-          .update({'sold': true});
-
-      setState(() {
-        isSold = true;
-      });
-
       Navigator.push(
         context,
         MaterialPageRoute(

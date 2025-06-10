@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'home_screen.dart';
 
 class MockPaymentScreen extends StatefulWidget {
   final List<QueryDocumentSnapshot>? cartItems;
@@ -74,12 +75,6 @@ class _MockPaymentScreenState extends State<MockPaymentScreen> {
 
         // Sepetten sil
         batch.delete(item.reference);
-
-        // Satıldı işareti
-        final artworkRef = FirebaseFirestore.instance
-            .collection('artworks')
-            .doc(artworkId);
-        batch.update(artworkRef, {'sold': true});
       }
     } else if (widget.artworkId != null) {
       final orderRef = FirebaseFirestore.instance.collection('orders').doc();
@@ -90,20 +85,30 @@ class _MockPaymentScreenState extends State<MockPaymentScreen> {
         'orderDate': Timestamp.now(),
         'status': 'Hazırlanıyor',
       });
-
-      final artworkRef = FirebaseFirestore.instance
-          .collection('artworks')
-          .doc(widget.artworkId);
-      batch.update(artworkRef, {'sold': true});
     }
 
     await batch.commit();
 
+    // Ödeme sonrası artwork "sold" olarak işaretlenir
+    if (widget.artworkId != null) {
+      final artworkRef = FirebaseFirestore.instance
+          .collection('artworks')
+          .doc(widget.artworkId);
+      await artworkRef.update({'sold': true});
+    }
+
+    // Başarı mesajı
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('added_to_orders'.tr())));
 
-    Navigator.pop(context);
+    // Ana sayfaya yönlendirme (HomeScreen)
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HomeScreen(),
+      ), // HomeScreen'e yönlendiriyoruz
+    );
   }
 
   @override
