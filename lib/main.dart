@@ -12,6 +12,7 @@ import 'screens/user_profile_screen.dart';
 import 'screens/chat_list_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/orders_screen.dart';
+import 'screens/my_sales_screen.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
@@ -138,6 +139,7 @@ class _MyAppState extends State<MyApp> {
             '/chats': (context) => const ChatListScreen(),
             '/cart': (context) => CartScreen(),
             '/orders': (context) => OrdersScreen(),
+            '/sales': (context) => MySalesScreen(),
           },
           home: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),

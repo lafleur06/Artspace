@@ -294,57 +294,36 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     padding: const EdgeInsets.only(bottom: 8),
                     child: Column(
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/orders');
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.indigo,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(
-                            Icons.receipt_long,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            tr("my_orders"),
-                            style: const TextStyle(color: Colors.white),
-                          ),
+                        _buildProfileButton(
+                          context,
+                          icon: Icons.receipt_long,
+                          label: tr("my_orders"),
+                          color: Colors.indigo,
+                          onPressed:
+                              () => Navigator.pushNamed(context, '/orders'),
                         ),
-                        const SizedBox(height: 8),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const MyOffersScreen(),
+                        const SizedBox(height: 10),
+                        _buildProfileButton(
+                          context,
+                          icon: Icons.local_offer,
+                          label: tr("my_offers"),
+                          color: Colors.deepPurple,
+                          onPressed:
+                              () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const MyOffersScreen(),
+                                ),
                               ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          icon: const Icon(
-                            Icons.local_offer,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            tr("my_offers"),
-                            style: const TextStyle(color: Colors.white),
-                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildProfileButton(
+                          context,
+                          icon: Icons.sell,
+                          label: tr("my_sales"),
+                          color: Colors.green,
+                          onPressed:
+                              () => Navigator.pushNamed(context, '/sales'),
                         ),
                       ],
                     ),
@@ -449,6 +428,34 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildProfileButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: 220,
+      height: 42,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          elevation: 2,
+        ),
+        icon: Icon(icon, color: Colors.white, size: 18),
+        label: Text(
+          label,
+          style: const TextStyle(color: Colors.white, fontSize: 14),
+        ),
+      ),
     );
   }
 }

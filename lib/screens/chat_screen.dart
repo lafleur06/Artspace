@@ -71,7 +71,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         .doc(widget.chatId);
     final messageRef = chatRef.collection('messages').doc();
 
-    // Alıcıyı belirle
     final receiverId = widget.otherUserId;
 
     await messageRef.set({

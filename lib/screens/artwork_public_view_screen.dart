@@ -124,8 +124,7 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
 
     if (likedBy.contains(uid)) {
       likedBy.remove(uid);
-      likes =
-          (likes - 1).clamp(0, double.infinity).toInt(); // 0'ın altına inmesin
+      likes = (likes - 1).clamp(0, double.infinity).toInt();
       setState(() => isLiked = false);
     } else {
       likedBy.add(uid);
@@ -368,12 +367,16 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
             Column(
               children: [
                 if (isSold)
-                  ElevatedButton.icon(
-                    onPressed: null,
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: Text("sold_status".tr()),
-                    style: ElevatedButton.styleFrom(
-                      disabledBackgroundColor: Colors.grey,
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: null,
+                      icon: const Icon(Icons.check_circle_outline),
+                      label: Text("sold_status".tr()),
+                      style: ElevatedButton.styleFrom(
+                        disabledBackgroundColor: Colors.grey,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
                     ),
                   )
                 else ...[
@@ -385,43 +388,50 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
                     keyboardType: TextInputType.number,
                     onChanged: (val) => offer = double.tryParse(val),
                   ),
-                  const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    onPressed: submitOffer,
-                    icon: const Icon(Icons.attach_money),
-                    label: Text("submit_offer".tr()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    onPressed: confirmPurchase,
-                    icon: const Icon(Icons.shopping_cart_checkout),
-                    label: Text("purchase".tr()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    onPressed: addToCart,
-                    icon: const Icon(Icons.shopping_cart),
-                    label: Text("add_to_cart".tr()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                  const SizedBox(height: 12),
+                  ...[
+                    {
+                      'onPressed': submitOffer,
+                      'icon': Icons.attach_money,
+                      'label': "submit_offer".tr(),
+                      'color': Colors.purple,
+                    },
+                    {
+                      'onPressed': confirmPurchase,
+                      'icon': Icons.shopping_cart_checkout,
+                      'label': "purchase".tr(),
+                      'color': Colors.green,
+                    },
+                    {
+                      'onPressed': addToCart,
+                      'icon': Icons.shopping_cart,
+                      'label': "add_to_cart".tr(),
+                      'color': Colors.orange,
+                    },
+                    {
+                      'onPressed': openChatWithArtist,
+                      'icon': Icons.message,
+                      'label': "send_message".tr(),
+                      'color': Colors.indigo,
+                    },
+                  ].map(
+                    (btn) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: btn['onPressed'] as VoidCallback,
+                          icon: Icon(btn['icon'] as IconData),
+                          label: Text(btn['label'] as String),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: btn['color'] as Color,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: openChatWithArtist,
-                  icon: const Icon(Icons.message),
-                  label: Text("send_message".tr()),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.indigo,
-                  ),
-                ),
               ],
             ),
 

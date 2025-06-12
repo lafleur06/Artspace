@@ -1,12 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'home_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class MockPaymentScreen extends StatefulWidget {
   final List<QueryDocumentSnapshot>? cartItems;
   final String userId;
-
   final String? artworkId;
   final Map<String, dynamic>? artworkData;
 
@@ -36,6 +38,9 @@ class _MockPaymentScreenState extends State<MockPaymentScreen> {
       artworksToPurchase.add(widget.artworkData!);
       totalPrice = price;
     }
+
+    Stripe.publishableKey =
+        'pk_test_51RY61mH5lK8DjHeUp0U8aMSw9v90pWdvWLmpmY3NpsynGEhtA36zkgfFovzvhYbMObJxtz5mqjYyQV8TgiHaHiQx00FpEVWjaj';
   }
 
   Future<void> _loadCartArtworks() async {
@@ -57,7 +62,49 @@ class _MockPaymentScreenState extends State<MockPaymentScreen> {
     setState(() {});
   }
 
-  Future<void> completePurchase(BuildContext context) async {
+  Future<Map<String, dynamic>> fetchPaymentIntentClientSecret() async {
+    final url = Uri.parse(
+      'https://api-ceoctdjsaq-uc.a.run.app/create-payment-intent',
+    );
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'amount': (totalPrice * 100).toInt(),
+        'currency': 'try',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('${'payment_intent_failed'.tr()}: ${response.body}');
+    }
+  }
+
+  Future<void> startPayment() async {
+    try {
+      final paymentIntentData = await fetchPaymentIntentClientSecret();
+
+      await Stripe.instance.initPaymentSheet(
+        paymentSheetParameters: SetupPaymentSheetParameters(
+          paymentIntentClientSecret: paymentIntentData['client_secret'],
+          merchantDisplayName: 'Artspace',
+        ),
+      );
+
+      await Stripe.instance.presentPaymentSheet();
+      completePurchase();
+    } catch (e) {
+      print("Ödeme sırasında hata: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('payment_failed'.tr())));
+    }
+  }
+
+  Future<void> completePurchase() async {
     final batch = FirebaseFirestore.instance.batch();
 
     if (widget.cartItems != null) {
@@ -65,16 +112,19 @@ class _MockPaymentScreenState extends State<MockPaymentScreen> {
         final artworkId = item['artworkId'];
         final orderRef = FirebaseFirestore.instance.collection('orders').doc();
 
-        // Sipariş kaydı
         batch.set(orderRef, {
           'userId': widget.userId,
           'artworkId': artworkId,
           'orderDate': Timestamp.now(),
-          'status': 'Hazırlanıyor',
+          'status': 'payment_success',
         });
 
-        // Sepetten sil
         batch.delete(item.reference);
+
+        final artworkRef = FirebaseFirestore.instance
+            .collection('artworks')
+            .doc(artworkId);
+        batch.update(artworkRef, {'sold': true});
       }
     } else if (widget.artworkId != null) {
       final orderRef = FirebaseFirestore.instance.collection('orders').doc();
@@ -83,31 +133,24 @@ class _MockPaymentScreenState extends State<MockPaymentScreen> {
         'userId': widget.userId,
         'artworkId': widget.artworkId,
         'orderDate': Timestamp.now(),
-        'status': 'Hazırlanıyor',
+        'status': 'payment_success',
       });
+
+      final artworkRef = FirebaseFirestore.instance
+          .collection('artworks')
+          .doc(widget.artworkId);
+      batch.update(artworkRef, {'sold': true});
     }
 
     await batch.commit();
 
-    // Ödeme sonrası artwork "sold" olarak işaretlenir
-    if (widget.artworkId != null) {
-      final artworkRef = FirebaseFirestore.instance
-          .collection('artworks')
-          .doc(widget.artworkId);
-      await artworkRef.update({'sold': true});
-    }
-
-    // Başarı mesajı
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('added_to_orders'.tr())));
+    ).showSnackBar(SnackBar(content: Text('purchase_success'.tr())));
 
-    // Ana sayfaya yönlendirme (HomeScreen)
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(
-        builder: (_) => HomeScreen(),
-      ), // HomeScreen'e yönlendiriyoruz
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
     );
   }
 
@@ -119,11 +162,6 @@ class _MockPaymentScreenState extends State<MockPaymentScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text(
-              "payment_redirect".tr(),
-              style: const TextStyle(fontSize: 18),
-              textAlign: TextAlign.center,
-            ),
             const SizedBox(height: 24),
             if (artworksToPurchase.isEmpty)
               const CircularProgressIndicator()
@@ -134,7 +172,7 @@ class _MockPaymentScreenState extends State<MockPaymentScreen> {
                   itemBuilder: (context, index) {
                     final artwork = artworksToPurchase[index];
                     return ListTile(
-                      title: Text(artwork['title'] ?? ''),
+                      title: Text(artwork['title'] ?? 'untitled'.tr()),
                       subtitle: Text(
                         "₺${(artwork['price'] ?? 0.0).toStringAsFixed(2)}",
                       ),
@@ -149,9 +187,9 @@ class _MockPaymentScreenState extends State<MockPaymentScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () => completePurchase(context),
+              onPressed: startPayment,
               icon: const Icon(Icons.check),
-              label: Text("confirm_purchase".tr()),
+              label: Text("purchase_button".tr()),
             ),
           ],
         ),

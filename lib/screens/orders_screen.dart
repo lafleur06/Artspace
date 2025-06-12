@@ -2,22 +2,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:intl/intl.dart';
 
 class OrdersScreen extends StatelessWidget {
   final userId = FirebaseAuth.instance.currentUser!.uid;
 
   String getTranslatedStatus(String status) {
-    switch (status) {
-      case 'Hazırlanıyor':
-        return 'status_preparing'.tr();
-      case 'Kargoda':
-        return 'status_shipped'.tr();
-      case 'Teslim Edildi':
-        return 'status_delivered'.tr();
-      default:
-        return status;
-    }
+    final localizedKeys = {
+      'payment_success': 'payment_success',
+      'preparing': 'status_preparing',
+      'shipped': 'status_shipped',
+      'delivered': 'status_delivered',
+    };
+
+    return localizedKeys.containsKey(status)
+        ? localizedKeys[status]!.tr()
+        : status.tr();
   }
 
   @override
@@ -48,7 +47,9 @@ class OrdersScreen extends StatelessWidget {
               final order = orders[index];
               final artworkId = order['artworkId'];
               final timestamp = order['orderDate'] as Timestamp;
-              final dateStr = DateFormat.yMMMd().format(timestamp.toDate());
+              final dateStr = DateFormat.yMMMd(
+                context.locale.languageCode,
+              ).format(timestamp.toDate());
               final status = getTranslatedStatus(order['status']);
 
               return FutureBuilder<DocumentSnapshot>(
@@ -61,14 +62,14 @@ class OrdersScreen extends StatelessWidget {
                   if (!artworkSnap.hasData || !artworkSnap.data!.exists) {
                     return ListTile(
                       leading: const Icon(Icons.image),
-                      title: Text("Artwork"),
-                      subtitle: Text("loading..."),
+                      title: Text("loading_artwork".tr()),
+                      subtitle: Text("loading".tr()),
                     );
                   }
 
                   final artworkData =
                       artworkSnap.data!.data() as Map<String, dynamic>;
-                  final title = artworkData['title'] ?? 'Untitled';
+                  final title = artworkData['title'] ?? 'untitled'.tr();
                   final price = (artworkData['price'] ?? 0.0) as double;
 
                   return ListTile(
@@ -79,7 +80,7 @@ class OrdersScreen extends StatelessWidget {
                       children: [
                         Text('${'price'.tr()}: ₺${price.toStringAsFixed(2)}'),
                         Text('${'order_date'.tr()}: $dateStr'),
-                        Text('${'status_preparing'.tr()}: $status'),
+                        Text('${'status'.tr()}: $status'),
                       ],
                     ),
                   );

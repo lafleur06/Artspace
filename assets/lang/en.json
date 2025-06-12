@@ -1,6 +1,6 @@
 {
-    "home_title": "Welcome to ArtSpace!",
-    "home_subtitle": "Share your art, create galleries,\nexplore others' works.",
+    "home_title": "Artspace",
+    "home_subtitle": "Step Into Creativity",
     "most_liked": "🎨 Most Liked Artworks",
     "see_galleries": "See Galleries",
     "create_gallery": "Create Gallery",
@@ -136,6 +136,14 @@
     "offer_for_artwork": "Offer {{amount}} for \"{{title}}\"",
     "from": "From",
     "like": "Like",
-    "unlike": "Unlike"
+    "unlike": "Unlike",
+    "payment_failed": "Payment failed!",
+    "purchase_success": "Your order has been successfully completed!",
+    "purchase_button": "Buy Now",
+    "loading_artwork": "Loading artwork",
+    "status": "Status",
+    "payment_intent_failed": "PaymentIntent creation failed",
+    "payment_success": "Payment Successful",
+    "my_sales": "My Sales",
+    "no_sales_yet": "You don't have any sales yet."
   }
-  
