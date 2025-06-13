@@ -13,6 +13,9 @@ import 'screens/chat_list_screen.dart';
 import 'screens/cart_screen.dart';
 import 'screens/orders_screen.dart';
 import 'screens/my_sales_screen.dart';
+import 'screens/auction_list_screen.dart';
+import 'screens/auction_add_screen.dart';
+import 'screens/auction_detail_screen.dart';
 
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.light);
 
@@ -140,6 +143,13 @@ class _MyAppState extends State<MyApp> {
             '/cart': (context) => CartScreen(),
             '/orders': (context) => OrdersScreen(),
             '/sales': (context) => MySalesScreen(),
+            '/auctions': (context) => const AuctionListScreen(),
+            '/addAuction': (context) => const AuctionAddScreen(),
+            '/auctionDetail': (context) {
+              final auctionId =
+                  ModalRoute.of(context)!.settings.arguments as String;
+              return AuctionDetailScreen(auctionId: auctionId);
+            },
           },
           home: StreamBuilder<User?>(
             stream: FirebaseAuth.instance.authStateChanges(),
