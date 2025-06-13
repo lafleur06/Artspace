@@ -182,10 +182,10 @@
   "placed_a_higher_bid": "açık artırmana daha yüksek bir teklif verdi.",
   "you_won_auction_for": "{0} adlı eser için açık artırmayı kazandınız!",
   "a_user_notification": "Bir kullanıcı bildirimi",
-  "bid_outbid_message": "{{user}}, '{{artwork}}' için daha yüksek bir teklif verdi.",
-  "auction_won_message": "'{{artwork}}' için ₺{{amount}} teklif ile açık artırmayı kazandınız!",
-  "auction_result_message": "{{user}}, '{{artwork}}' için ₺{{amount}} ile açık artırmayı kazandı.",
-  "auction_started_message": "'{{artwork}}' için açık artırma başladı!",
-  "normal_offer_message": "{{user}}, '{{artwork}}' için ₺{{amount}} teklif verdi.",
-  "bid_placed_message": "{{user}}, '{{artwork}}' için ₺{{amount}} teklif verdi."
+  "bid_outbid_message": "{user}, {artwork} için daha yüksek bir teklif verdi.",
+  "auction_won_message": "{artwork} için ₺{amount} teklif ile açık artırmayı kazandınız!",
+  "auction_result_message": "{user}, {artwork} için ₺{amount} ile açık artırmayı kazandı.",
+  "auction_started_message": "{artwork} için açık artırma başladı!",
+  "normal_offer_message": "{user}, {artwork} için ₺{amount} teklif verdi.",
+  "bid_placed_message": "{user}, {artwork} için ₺{amount} teklif verdi."
   }
