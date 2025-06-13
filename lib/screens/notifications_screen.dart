@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:intl/intl.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -73,47 +74,25 @@ class NotificationsScreen extends StatelessWidget {
                                   ? (data['createdAt'] as Timestamp).toDate()
                                   : null;
                           final fromUserId = data['fromUserId'];
-                          final artworkTitle =
-                              data['artworkTitle'] ?? tr("an_artwork");
-                          final amount =
-                              (data['amount'] is num)
-                                  ? (data['amount'] as num).toStringAsFixed(2)
-                                  : '0.00';
-
-                          if (fromUserId == null) {
-                            return ListTile(
-                              leading: const Icon(Icons.notifications),
-                              title: Text(
-                                data['message'] ?? tr("default_message"),
-                              ),
-                              subtitle:
-                                  createdAt != null
-                                      ? Text(
-                                        DateFormat(
-                                          "dd.MM.yyyy HH:mm",
-                                        ).format(createdAt),
-                                      )
-                                      : null,
-                            );
-                          }
+                          final message =
+                              data['message'] ?? tr("default_message");
 
                           return FutureBuilder<String>(
-                            future: getUsername(fromUserId),
+                            future:
+                                fromUserId != null
+                                    ? getUsername(fromUserId)
+                                    : Future.value(tr("a_user")),
                             builder: (context, userSnapshot) {
                               final username =
                                   userSnapshot.data ?? tr("a_user");
-                              final message = tr(
-                                "offer_message",
-                                namedArgs: {
-                                  "user": username,
-                                  "artwork": artworkTitle,
-                                  "amount": amount,
-                                },
+                              final fullMessage = message.replaceAll(
+                                "{user}",
+                                username,
                               );
 
                               return ListTile(
                                 leading: const Icon(Icons.notifications),
-                                title: Text(message),
+                                title: Text(fullMessage),
                                 subtitle:
                                     createdAt != null
                                         ? Text(

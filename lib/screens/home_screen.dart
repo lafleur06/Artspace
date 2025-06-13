@@ -336,6 +336,22 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.gavel),
+            title: Text("auctions".tr()),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/auctions');
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.add_circle_outline),
+            title: Text("add_auction".tr()),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/addAuction');
+            },
+          ),
           const Divider(),
           Padding(
             padding: const EdgeInsets.only(left: 16, top: 8),
