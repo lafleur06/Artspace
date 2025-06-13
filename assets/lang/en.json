@@ -181,5 +181,12 @@
   "won_the_auction": "won the auction",
   "starts_in": "Starts in",
   "placed_a_higher_bid": "placed a higher bid on your auction.",
-  "you_won_auction_for": "You won the auction for {0}!"
+  "you_won_auction_for": "You won the auction for {0}!",
+  "a_user_notification": "A user notification",
+  "bid_outbid_message": "{{user}} placed a higher bid on '{{artwork}}'.",
+  "auction_won_message": "You won the auction for '{{artwork}}' with a bid of ₺{{amount}}!",
+  "auction_result_message": "{{user}} won the auction for '{{artwork}}' with ₺{{amount}}.",
+  "auction_started_message": "The auction for '{{artwork}}' has started!",
+  "normal_offer_message": "{{user}} offered ₺{{amount}} for '{{artwork}}'.",
+  "bid_placed_message": "{{user}} placed a bid of ₺{{amount}} on '{{artwork}}'."
 }

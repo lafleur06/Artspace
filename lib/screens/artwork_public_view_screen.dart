@@ -140,12 +140,16 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
 
     final price = widget.artwork['price'] ?? 0.0;
     final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (offer == null || offer! <= 0 || offer! > price) {
+    if (offer == null || offer! <= 0 || offer! > price || userId == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text("enter_valid_offer".tr())));
       return;
     }
+
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    final username = userDoc.data()?['username'] ?? tr("a_user");
 
     await FirebaseFirestore.instance.collection('offers').add({
       'artworkId': widget.artworkId,
@@ -159,9 +163,14 @@ class _ArtworkPublicViewScreenState extends State<ArtworkPublicViewScreen> {
     await FirebaseFirestore.instance.collection('notifications').add({
       'toUserId': widget.artwork['userId'],
       'fromUserId': userId,
-      'artworkTitle': widget.artwork['title'],
-      'amount': offer,
-      'createdAt': FieldValue.serverTimestamp(),
+      'type': 'normal_offer',
+      'message': 'normal_offer_message',
+      'namedArgs': {
+        'user': username,
+        'artwork': widget.artwork['title'],
+        'amount': offer!.toStringAsFixed(2),
+      },
+      'createdAt': Timestamp.now(),
       'isRead': false,
     });
 

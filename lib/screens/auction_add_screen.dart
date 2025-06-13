@@ -26,6 +26,7 @@ class _AuctionAddScreenState extends State<AuctionAddScreen> {
         await FirebaseFirestore.instance
             .collection('artworks')
             .where('userId', isEqualTo: userId)
+            .where('sold', isEqualTo: false)
             .get();
 
     return query.docs;

@@ -32,7 +32,6 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
 
   void _loadAuction() async {
     final now = DateTime.now();
-
     auctionDoc =
         await FirebaseFirestore.instance
             .collection('auctions')
@@ -64,7 +63,6 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
           }
         });
       });
-
       setState(() => loading = false);
       return;
     }
@@ -74,19 +72,17 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
           .collection('auctions')
           .doc(widget.auctionId)
           .update({'status': 'active'});
-
-      // 🔔 Bildirim: açık artırma başladı
       final ownerId = artworkDoc?['userId'];
-      final artworkTitle = artworkDoc?['title'] ?? "bir eser";
+      final artworkTitle = artworkDoc?['title'] ?? tr("an_artwork");
       await FirebaseFirestore.instance.collection('notifications').add({
         'toUserId': ownerId,
         'fromUserId': FirebaseAuth.instance.currentUser!.uid,
         'type': 'auction_started',
-        'message': "$artworkTitle adlı eser için açık artırma başladı.",
+        'message': 'auction_started_message',
+        'namedArgs': {'artwork': artworkTitle},
         'createdAt': Timestamp.now(),
         'isRead': false,
       });
-
       auctionDoc =
           await FirebaseFirestore.instance
               .collection('auctions')
@@ -95,7 +91,6 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
     }
 
     final updatedStatus = auctionDoc['status'];
-
     if (updatedStatus == 'ended') {
       await _notifyWinner();
       setState(() {
@@ -116,7 +111,6 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
     final countdown = auctionDoc['countdownSeconds'] ?? 60;
     final lastBidTime = (bids.last['timestamp'] as Timestamp).toDate();
     final expiryTime = lastBidTime.add(Duration(seconds: countdown));
-
     if (now.isAfter(expiryTime)) {
       await FirebaseFirestore.instance
           .collection('auctions')
@@ -153,7 +147,7 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
     if (notStartedYet) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("auction_not_started".tr())));
+      ).showSnackBar(SnackBar(content: Text(tr("auction_not_started"))));
       return;
     }
 
@@ -161,49 +155,55 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
     if (ownerId == userId) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("cannot_bid_own_artwork".tr())));
+      ).showSnackBar(SnackBar(content: Text(tr("cannot_bid_own_artwork"))));
       return;
     }
 
     final bids = auctionDoc['bids'] as List<dynamic>? ?? [];
     final lastBid = bids.isNotEmpty ? bids.last : null;
-
     if (lastBid != null && lastBid['userId'] == userId) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("cannot_bid_twice".tr())));
+      ).showSnackBar(SnackBar(content: Text(tr("cannot_bid_twice"))));
       return;
     }
 
     if (newBid == null || newBid <= (auctionDoc['currentPrice'] ?? 0)) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("invalid_bid".tr())));
+      ).showSnackBar(SnackBar(content: Text(tr("invalid_bid"))));
       return;
     }
 
-    final artworkTitle = artworkDoc?['title'] ?? "bir eser";
+    final artworkTitle = artworkDoc?['title'] ?? tr("an_artwork");
 
-    // 🔔 Bildirim: önceki teklif verene
+    final userDoc =
+        await FirebaseFirestore.instance.collection('users').doc(userId).get();
+    final username = userDoc.data()?['username'] ?? tr("a_user");
+
     if (lastBid != null && lastBid['userId'] != userId) {
       await FirebaseFirestore.instance.collection('notifications').add({
         'toUserId': lastBid['userId'],
         'fromUserId': userId,
         'type': 'bid_outbid',
-        'message': "Verdiğiniz teklifin üstüne yeni bir teklif verildi.",
+        'message': 'bid_outbid_message',
+        'namedArgs': {'user': username, 'artwork': artworkTitle},
         'createdAt': Timestamp.now(),
         'isRead': false,
       });
     }
 
-    // 🔔 Bildirim: eser sahibine
     if (ownerId != null) {
       await FirebaseFirestore.instance.collection('notifications').add({
         'toUserId': ownerId,
         'fromUserId': userId,
         'type': 'bid_placed',
-        'message':
-            "$artworkTitle adlı esere ₺${newBid.toStringAsFixed(2)} teklif verildi.",
+        'message': 'bid_placed_message',
+        'namedArgs': {
+          'user': username,
+          'artwork': artworkTitle,
+          'amount': newBid.toStringAsFixed(2),
+        },
         'createdAt': Timestamp.now(),
         'isRead': false,
       });
@@ -228,35 +228,49 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
   Future<void> _notifyWinner() async {
     final winnerId = auctionDoc['currentWinnerId'];
     final ownerId = artworkDoc?['userId'];
-    final artworkTitle = artworkDoc?['title'] ?? "bir eser";
+    final artworkTitle = artworkDoc?['title'] ?? tr("an_artwork");
+    final artworkId = artworkDoc?.id;
     final finalPrice = auctionDoc['currentPrice']?.toStringAsFixed(2) ?? "0.00";
 
     if (winnerId != null && winnerId.toString().isNotEmpty) {
-      // 🔔 Bildirim: kazanana
       await FirebaseFirestore.instance.collection('notifications').add({
         'toUserId': winnerId,
         'fromUserId': FirebaseAuth.instance.currentUser!.uid,
         'type': 'auction_won',
-        'message':
-            "$artworkTitle adlı eseri ₺$finalPrice teklif ile kazandınız.",
+        'message': 'auction_won_message',
+        'namedArgs': {'artwork': artworkTitle, 'amount': finalPrice},
         'createdAt': Timestamp.now(),
         'isRead': false,
       });
 
-      // 🔔 Bildirim: eser sahibine kazanan bilgisiyle
+      await FirebaseFirestore.instance.collection('offers').add({
+        'artworkId': artworkId,
+        'artworkTitle': artworkTitle,
+        'toUserId': ownerId,
+        'fromUserId': winnerId,
+        'amount': finalPrice,
+        'createdAt': Timestamp.now(),
+        'isAuctionWinner': true,
+      });
+
       if (ownerId != null && ownerId != winnerId) {
         final winnerDoc =
             await FirebaseFirestore.instance
                 .collection('users')
                 .doc(winnerId)
                 .get();
-        final winnerUsername = winnerDoc.get('username') ?? 'Bir kullanıcı';
+        final winnerUsername = winnerDoc.get('username') ?? tr("a_user");
+
         await FirebaseFirestore.instance.collection('notifications').add({
           'toUserId': ownerId,
           'fromUserId': winnerId,
           'type': 'auction_result',
-          'message':
-              "$artworkTitle adlı eser için açık artırma sona erdi. $winnerUsername ₺$finalPrice teklif ile kazandı.",
+          'message': 'auction_result_message',
+          'namedArgs': {
+            'user': winnerUsername,
+            'artwork': artworkTitle,
+            'amount': finalPrice,
+          },
           'createdAt': Timestamp.now(),
           'isRead': false,
         });
@@ -321,7 +335,8 @@ class _AuctionDetailScreenState extends State<AuctionDetailScreen> {
                         .doc(winner)
                         .get(),
                 builder: (context, snapshot) {
-                  final username = snapshot.data?.get('username') ?? 'Someone';
+                  final username =
+                      snapshot.data?.get('username') ?? tr('a_user');
                   final isYou = winner == userId;
                   return Text(
                     isYou

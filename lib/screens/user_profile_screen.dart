@@ -402,6 +402,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
           itemBuilder: (context, index) {
             final doc = docs[index];
             final data = doc.data() as Map<String, dynamic>;
+            final isSold = data['sold'] == true;
+
             return ListTile(
               leading:
                   data['imageUrl'] != null && data['imageUrl'] != ""
@@ -412,7 +414,31 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                         fit: BoxFit.cover,
                       )
                       : const Icon(Icons.image),
-              title: Text(data['title'] ?? data['name'] ?? ""),
+              title: Row(
+                children: [
+                  Expanded(child: Text(data['title'] ?? data['name'] ?? "")),
+                  if (type == "Eser" && isSold)
+                    Container(
+                      margin: const EdgeInsets.only(left: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade100,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        tr("sold_status"),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               subtitle: Text(data['description'] ?? ""),
               trailing: IconButton(
                 icon: const Icon(Icons.delete, color: Colors.red),

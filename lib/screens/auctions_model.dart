@@ -27,7 +27,7 @@ class Bid {
 class Auction {
   final String id;
   final String artworkId;
-  final String userId; // 👈 ownerId yerine userId
+  final String userId;
   final DateTime startTime;
   final double initialPrice;
   final double currentPrice;
@@ -53,7 +53,7 @@ class Auction {
     return Auction(
       id: id,
       artworkId: data['artworkId'],
-      userId: data['userId'], // 👈 düzeltildi
+      userId: data['userId'],
       startTime: (data['startTime'] as Timestamp).toDate(),
       initialPrice: (data['initialPrice'] ?? 0).toDouble(),
       currentPrice: (data['currentPrice'] ?? 0).toDouble(),
@@ -71,7 +71,7 @@ class Auction {
   Map<String, dynamic> toMap() {
     return {
       'artworkId': artworkId,
-      'userId': userId, // 👈 ownerId yerine userId
+      'userId': userId,
       'startTime': Timestamp.fromDate(startTime),
       'initialPrice': initialPrice,
       'currentPrice': currentPrice,

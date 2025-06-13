@@ -1,3 +1,4 @@
+// 🔔 notifications_screen.dart
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -74,8 +75,14 @@ class NotificationsScreen extends StatelessWidget {
                                   ? (data['createdAt'] as Timestamp).toDate()
                                   : null;
                           final fromUserId = data['fromUserId'];
-                          final message =
-                              data['message'] ?? tr("default_message");
+                          final messageKey =
+                              data['message'] ?? 'a_user_notification';
+                          final namedArgsRaw = data['namedArgs'] ?? {};
+                          final namedArgs = Map<String, String>.from(
+                            namedArgsRaw.map(
+                              (key, value) => MapEntry(key, value.toString()),
+                            ),
+                          );
 
                           return FutureBuilder<String>(
                             future:
@@ -85,14 +92,16 @@ class NotificationsScreen extends StatelessWidget {
                             builder: (context, userSnapshot) {
                               final username =
                                   userSnapshot.data ?? tr("a_user");
-                              final fullMessage = message.replaceAll(
-                                "{user}",
-                                username,
+                              namedArgs['user'] = namedArgs['user'] ?? username;
+
+                              final displayMessage = tr(
+                                messageKey,
+                                namedArgs: namedArgs,
                               );
 
                               return ListTile(
                                 leading: const Icon(Icons.notifications),
-                                title: Text(fullMessage),
+                                title: Text(displayMessage),
                                 subtitle:
                                     createdAt != null
                                         ? Text(
